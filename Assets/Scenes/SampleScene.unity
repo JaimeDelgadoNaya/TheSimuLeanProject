@@ -134,6 +134,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ff5c97322173d34cad0649728fd5ca0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &389178479 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1240807188508992847, guid: 4dbdff92b4a7ba649aeb0d7ad2c22f5a, type: 3}
+  m_PrefabInstance: {fileID: 1240807187880392795}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &389178485
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 389178479}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f134a10ae4cc3943924ab3b1ea317c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nextElement: {fileID: 119064424}
+  myPreviousLink: {fileID: 0}
+  myNextLink: {fileID: 0}
+  itemPrefab: {fileID: 4744146381593178673, guid: 655deb179acc52748a8acd92f95e6edb, type: 3}
+  separation: 1
+  itemPosition: {fileID: 0}
+  myName: Jaime
+  fileName: model_scheduleSource.data
 --- !u!114 &418561262 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9027891127040377300, guid: 5cc7ebb92f23ac74e9c1a592e3759f8f, type: 3}
@@ -352,8 +377,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   simEvents: {fileID: 11400000, guid: 7b88f3881f55a8f4983a441903f47b6a, type: 2}
-  ExperimenterOn: 1
-  experimenter: {fileID: 1123213217}
+  ExperimenterOn: 0
+  experimenter: {fileID: 0}
   maxTime: 1000
 --- !u!4 &1123213215
 Transform:
@@ -376,28 +401,18 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1123213213}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9e5b4fd4093ce144e8aadd3686e8b2ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   maxTime: 100
-  timeScale: 50
-  iElements:
-  - {fileID: 119064424}
-  iParameters:
-  - Capacity
-  scenarios:
-  - myList:
-    - 5
-  - myList:
-    - 10
-  oElements:
-  - {fileID: 119064424}
-  - {fileID: 418561262}
-  Variables:
-  - Content
-  - Input
+  timeScale: 100
+  iElements: []
+  iParameters: []
+  scenarios: []
+  oElements: []
+  Variables: []
 --- !u!114 &1784754815 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6813174212234330456, guid: 836ec2a0caf0e4743bdae04a7cf0a43c, type: 3}
@@ -575,7 +590,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1240807188508992834, guid: 4dbdff92b4a7ba649aeb0d7ad2c22f5a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 482.21
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 1240807188508992834, guid: 4dbdff92b4a7ba649aeb0d7ad2c22f5a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -603,6 +618,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1240807188508992834, guid: 4dbdff92b4a7ba649aeb0d7ad2c22f5a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240807188508992846, guid: 4dbdff92b4a7ba649aeb0d7ad2c22f5a, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1240807188508992846, guid: 4dbdff92b4a7ba649aeb0d7ad2c22f5a, type: 3}

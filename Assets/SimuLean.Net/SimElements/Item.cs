@@ -77,5 +77,32 @@ namespace SimuLean
         {
             return subItems;
         }
+        // ---------------------------
+        // Métodos agregados para asignar tipo y atributos extra:
+        public void SetType(string newType)
+        {
+            this.type = newType;
+        }
+
+        /// <summary>
+        /// Asigna un atributo extra como un valor double.
+        /// Si necesitas trabajar con otros tipos, puedes sobrecargar o convertir según sea necesario.
+        /// </summary>
+        public void SetLabelValue(string label, string value)
+        {
+            if (double.TryParse(value, out double dValue))
+            {
+                if (attribDouble == null)
+                    attribDouble = new Dictionary<string, double>();
+                attribDouble[label] = dValue;
+            }
+            else
+            {
+                // Si no es numérico, puedes decidir almacenarlo de otra forma,
+                // o lanzar una excepción, o simplemente ignorarlo.
+                // Aquí simplemente lo ignoramos.
+            }
+        }
     }
 }
+

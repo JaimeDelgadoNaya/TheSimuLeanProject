@@ -1,0 +1,5 @@
+Time Name Q Description
+0.0 Source 3 Start_Source
+1.0 Queue 2 Queue_Processing
+2.5 Workstation 1 Work_Processing
+3.0 Sink 1 End_Sink

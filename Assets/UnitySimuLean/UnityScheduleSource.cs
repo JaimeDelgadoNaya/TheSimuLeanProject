@@ -13,6 +13,10 @@ namespace UnitySimuLean
 
         public GameObject itemPrefab;
 
+        public float separation = 1f;
+
+        public Transform itemPosition;
+
         public string myName;
         public string fileName;
 
@@ -53,6 +57,8 @@ namespace UnitySimuLean
             newItem.SetActive(true);
 
             newItem.transform.position = transform.position;
+
+            Debug.Log("GenerateItem llamado, instanciado GameObject: " + newItem.name);
 
             return newItem;
         }

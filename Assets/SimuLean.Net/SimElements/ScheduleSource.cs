@@ -1,6 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text; // Asegúrate de tener esta línea
+using ExcelDataReader;  // Librería para leer Excel
+using UnityEngine;
+
+
 
 namespace SimuLean
 {
@@ -10,20 +18,178 @@ namespace SimuLean
     class ScheduleSource : Element, Eventcs
     {
         Item lastItem;
-
         int numberIterms;
-
         String fileName;
         TextReader dataFile;
-
         Queue<Item> itemsInQueue;
 
-        public ScheduleSource(String name, SimClock state, String fileName) : base(name, state)
+        //Nuevas Variables para los parametros opcionales Mod
+        private string fileType;
+        private Dictionary<string, List<string>> dataDict;
+        private Item modelItem;
+        private string sheetName;
+
+        // Variables de Estado adicionales (mod 3)
+        private double currentArrivalTime; // Tiempo de llegada para la fila actual mod
+        private string currentItemName;    // Nombre o tipo del ítem actual mod
+        private int currentPendingQ;       // Número de ítems pendientes en la fila mod 
+        private Dictionary<string, string> currentRow; // Fila actual de datos (encabezados y valores) mod 
+        private IEnumerator<Dictionary<string, string>> rowIterator; // Añadir esta línea para definir rowIterator
+
+        //constructor modificado con parametros opcionales Mod
+
+        public ScheduleSource(String name, SimClock state, String fileName = null, Dictionary<string, List<string>> dataDict = null, Item modelItem = null, string sheetName = null) : base(name, state)
         {
             this.fileName = fileName;
-            dataFile = File.OpenText(fileName);
+            this.dataDict = dataDict;
+            this.modelItem = modelItem;
+            this.sheetName = sheetName;
+
             itemsInQueue = new Queue<Item>();
+
+            //determinar el tipo de archivo si se proporciono fileName Mod
+
+            if (!string.IsNullOrEmpty(fileName))
+            {
+                //Estrae la extension y la convierte a minusculas gpt Mod
+                this.fileType = Path.GetExtension(fileName).TrimStart('.').ToLower();
+                // Por ejemplo, "xlsx", "csv", "data", etc.
+
+                //si se utiliza archivo, inicializa el lector
+                dataFile = File.OpenText(fileName);
+            }
+            else
+            {
+                this.fileType = null;
+            }
+
+
         }
+
+        /// <summary>
+        /// Retorna un iterador sobre las filas de datos, ya sea a partir de un diccionario o de un archivo.
+        /// Cada fila se representa como un Dictionary&lt;string, string&gt; con pares "encabezado-valor".
+        /// </summary>
+
+        private IEnumerable<Dictionary<string, string>> GetRowIterator()
+        {
+            // Caso 1: Usar diccionario de datos (dataDict)
+            if (dataDict != null)
+            {
+                List<string> headersList = new List<string>(dataDict.Keys);
+                int rowCount = dataDict.Values.First().Count;
+                for (int i = 0; i < rowCount; i++)
+                {
+                    Dictionary<string, string> rowDict = new Dictionary<string, string>();
+                    foreach (var header in headersList)
+                    {
+                        rowDict[header] = dataDict[header][i];
+                    }
+                    yield return rowDict;
+                }
+            }
+            // Caso 2: Usar archivo (fileName)
+            else if (!string.IsNullOrEmpty(fileName))
+            {
+                // Para archivos CSV: lectura manual (delimitador de coma)
+                if (fileType == "csv")
+                {
+                    using (var reader = new StreamReader(fileName))
+                    {
+                        string headerLine = reader.ReadLine();
+                        if (headerLine == null) yield break;
+                        string[] headers = headerLine.Split(',');
+                        string line;
+                        while ((line = reader.ReadLine()) != null)
+                        {
+                            if (string.IsNullOrWhiteSpace(line))
+                                continue;
+                            string[] values = line.Split(',');
+                            Dictionary<string, string> rowDict = new Dictionary<string, string>();
+                            for (int i = 0; i < headers.Length && i < values.Length; i++)
+                            {
+                                rowDict[headers[i]] = values[i];
+                            }
+                            yield return rowDict;
+                        }
+                    }
+                }
+
+                else if (fileType == "xlsx")
+                {
+                    // Registrar el proveedor de codificaciones
+                    System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                    using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        using (var reader = ExcelReaderFactory.CreateReader(stream))
+                        {
+                            DataSet result = reader.AsDataSet();
+                            DataTable table = null;
+                            if (string.IsNullOrEmpty(sheetName))
+                            {
+                                table = result.Tables[0];
+                            }
+                            else
+                            {
+                                table = result.Tables[sheetName] ?? result.Tables[0];
+                            }
+                            if (table == null || table.Rows.Count == 0) yield break;
+                            int colCount = table.Columns.Count;
+                            string[] headers = new string[colCount];
+                            // Se asume que la primera fila contiene los encabezados
+                            for (int i = 0; i < colCount; i++)
+                            {
+                                headers[i] = table.Rows[0][i]?.ToString() ?? "";
+                            }
+                            // Iterar a partir de la segunda fila
+                            for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++)
+                            {
+                                Dictionary<string, string> rowDict = new Dictionary<string, string>();
+                                for (int colIndex = 0; colIndex < colCount; colIndex++)
+                                {
+                                    rowDict[headers[colIndex]] = table.Rows[rowIndex][colIndex]?.ToString() ?? "";
+                                }
+                                yield return rowDict;
+                            }
+                        }
+                    }
+                }
+
+                // Archivos de tipo "data" (delimitados por espacios)
+                else if (fileType == "data")
+                {
+                    using (var reader = new StreamReader(fileName))
+                    {
+                        string headerLine = reader.ReadLine();
+                        if (headerLine == null) yield break;
+                        string[] headers = headerLine.Split(' ');
+                        string line;
+                        while ((line = reader.ReadLine()) != null)
+                        {
+                            if (string.IsNullOrWhiteSpace(line))
+                                continue;
+                            string[] values = line.Split(' ');
+                            Dictionary<string, string> rowDict = new Dictionary<string, string>();
+                            for (int i = 0; i < headers.Length && i < values.Length; i++)
+                            {
+                                rowDict[headers[i]] = values[i];
+                            }
+                            yield return rowDict;
+                        }
+                    }
+                }
+                else
+                {
+                    throw new NotSupportedException($"Tipo de archivo '{fileType}' no soportado.");
+                }
+            }
+            else
+            {
+                yield break; // No se proporcionó ni dataDict ni fileName
+            }
+        }
+
+
 
         public override void Start()
         {
@@ -31,28 +197,37 @@ namespace SimuLean
             ScheduleNext();
         }
 
+
+        /// <summary>
+        /// Itera sobre la cola completa, intentando enviar cada ítem mientras sea posible.
+        /// Si el primer ítem se envía correctamente, lo elimina y sigue intentando con el siguiente.
+        /// El bucle se detiene cuando se encuentra un ítem que no puede enviarse,
+        /// retornando true si al menos se envió alguno, o false si no se pudo enviar ninguno
+        /// </summary>
         public override bool Unblock()
         {
-            Item theItem;
-            if (itemsInQueue.Count > 0)
+            bool enviadoAlgunItem = false;
+
+            while (itemsInQueue.Count > 0)
             {
-                theItem = itemsInQueue.Peek();
+                Item theItem = itemsInQueue.Peek();
                 if (this.GetOutput().SendItem(theItem, this))
                 {
                     itemsInQueue.Dequeue();
-                    ScheduleNext();
-                    return true;
+                    // Se elimina la notificación, ya que no queremos modificar Element.
+                    enviadoAlgunItem = true;
                 }
                 else
                 {
-                    return false;
+                    // Si el primer ítem no se puede enviar, detenemos el proceso.
+                    break;
                 }
             }
-            else
-            {
-                return false;
-            }
+
+            return enviadoAlgunItem;
         }
+
+
 
         public override bool Receive(Item theItem)
         {
@@ -69,54 +244,128 @@ namespace SimuLean
         }
         void Eventcs.Execute()
         {
-
-            if (this.GetOutput().SendItem(lastItem, this))
+            Debug.Log("Execute() llamado.");
+            // Genera y procesa ítems mientras CreateItem() retorne uno
+            Item newItem = CreateItem();
+            while (newItem != null)
             {
-                ScheduleNext();
+                Debug.Log("Procesando ítem (ID: " + newItem.GetId() + ").");
+                // Intenta enviar el ítem; si no se puede, se añade a la cola de ítems bloqueados
+                if (!this.GetOutput().SendItem(newItem, this))
+                {
+                    Debug.Log("Fallo al enviar el ítem, se añade a la cola.");
+                    itemsInQueue.Enqueue(newItem);
+                }
+                numberIterms++;
+                newItem = CreateItem();
             }
-            else
-            {
-                itemsInQueue.Enqueue(lastItem);
-                ScheduleNext();
-            }
+            Debug.Log("Todos los ítems de la fila actual procesados. Programando siguiente fila.");
+            // Una vez procesados todos los ítems de la fila actual, programa el siguiente evento
+            ScheduleNext();
         }
+
 
         Item CreateItem()
         {
-            Item nItem = new Item(simClock.GetSimulationTime());
+            Debug.Log("CreateItem() llamado. currentPendingQ = " + currentPendingQ);
+            // Si no quedan ítems pendientes, retorna null
+            if (currentPendingQ <= 0)
+            {
+                return null;
+            }
 
-            return nItem;
+            // Decrementa la cantidad pendiente
+            currentPendingQ--;
+
+            // Crea el ítem usando el tiempo actual de la simulación
+            Item newItem = new Item(simClock.GetSimulationTime());
+
+            // Asigna el tipo o nombre del ítem
+            newItem.SetType(currentItemName);  // Asegúrate de que el método SetType exista en Item
+            Debug.Log("Ítem creado de tipo: " + currentItemName);
+            // Asigna atributos adicionales
+            // Itera sobre cada clave en currentRow, omitiendo las básicas ("Time", "Name", "Q")
+            foreach (var kvp in currentRow)
+            {
+                if (kvp.Key == "Time" || kvp.Key == "Name" || kvp.Key == "Q")
+                    continue;
+
+                // Asumiendo que Item tiene un método SetLabelValue para asignar atributos
+                newItem.SetLabelValue(kvp.Key, kvp.Value);
+                Debug.Log("Atributo asignado: " + kvp.Key + " = " + kvp.Value);
+            }
+            newItem.vItem = vElement.GenerateItem(newItem.GetId());
+            Debug.Log("vItem asignado al ítem.");
+
+            return newItem;
         }
-
         public override bool CheckAvaliability(Item theItem)
         {
             return false;
         }
 
-        void ScheduleNext()
+        /// <summary>
+        /// Programa el siguiente evento leyendo la siguiente fila de datos y actualizando las variables de estado.
+        /// </summary>
+        private void ScheduleNext()
         {
-            lastItem = CreateItem();
-            ReadFileAndSet();
-            lastItem.vItem = vElement.GenerateItem(lastItem.GetId());
-            numberIterms++;
+            Debug.Log("ScheduleNext() llamado.");
+            // Inicializa el iterador la primera vez.
+            if (rowIterator == null)
+            {
+                rowIterator = GetRowIterator().GetEnumerator();
+                Debug.Log("Row iterator inicializado.");
+            }
 
-            if (simClock.GetSimulationTime() > lastItem.GetCreationTime())
-                simClock.ScheduleEvent(this, simClock.GetSimulationTime());
+            // Avanza a la siguiente fila; si no hay más, cierra recursos y termina.
+            if (!rowIterator.MoveNext())
+            {
+                Debug.Log("No hay más filas. Cerrando archivo.");
+                dataFile?.Close();
+                return;
+            }
+
+            // Actualiza la fila actual.
+            currentRow = rowIterator.Current;
+            Debug.Log("Fila actual leída: " + string.Join(", ", currentRow.Select(kvp => kvp.Key + "=" + kvp.Value)));
+            // Actualiza currentArrivalTime usando el valor de la columna "Time".
+            if (currentRow.ContainsKey("Time") && double.TryParse(currentRow["Time"], out double time))
+            {
+                currentArrivalTime = time;
+            }
             else
-                simClock.ScheduleEvent(this, lastItem.GetCreationTime());
-
+            {
+                currentArrivalTime = simClock.GetSimulationTime();
+            }
+            Debug.Log("Tiempo de llegada actual: " + currentArrivalTime);
+            // Actualiza currentItemName usando el valor de la columna "Name".
+            if (currentRow.ContainsKey("Name"))
+            {
+                currentItemName = currentRow["Name"];
+            }
+            else
+            {
+                currentItemName = "Default";
+            }
+            Debug.Log("Nombre del ítem actual: " + currentItemName);
+            // Actualiza currentPendingQ usando el valor de la columna "Q".
+            if (currentRow.ContainsKey("Q") && int.TryParse(currentRow["Q"], out int q))
+            {
+                currentPendingQ = q;
+            }
+            else
+            {
+                currentPendingQ = 1;
+            }
+            Debug.Log("Cantidad pendiente (Q): " + currentPendingQ);
+            // Calcula el retraso (delay) para el siguiente evento.
+            double delay = Math.Max(0, currentArrivalTime - simClock.GetSimulationTime());
+            Debug.Log("Programando el siguiente evento con retraso: " + delay);
+            // Programa el siguiente evento en el simulador.
+            simClock.ScheduleEvent(this, delay);
         }
 
-        void ReadFileAndSet()
-        {
 
-            string line;
-            line = dataFile.ReadLine();
-            string[] bits = line.Split(' ');
-
-            lastItem.SetId(bits[0], int.Parse(bits[1]), int.Parse(bits[2]));
-            lastItem.SetcreationTime(double.Parse(bits[3]));
-        }
 
         public Queue<Item> GetItems()
         {
