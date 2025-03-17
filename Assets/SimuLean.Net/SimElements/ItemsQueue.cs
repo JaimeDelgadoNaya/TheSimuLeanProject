@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;  
 
 namespace SimuLean
 {
@@ -59,6 +60,7 @@ namespace SimuLean
 
         public override bool Receive(Item theItem)
         {
+            Debug.Log($"{GetName()}: Receive() llamado para el item {theItem.GetId()}. currentItems = {currentItems}, capacity = {capacity}");
             if (currentItems < capacity)
             {
                 if (!GetOutput().SendItem(theItem, this))

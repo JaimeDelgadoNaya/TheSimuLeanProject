@@ -103,6 +103,54 @@ namespace SimuLean
                 // Aquí simplemente lo ignoramos.
             }
         }
+        public int? GetBatchRequirement()
+        {
+            // Se asume que si el ítem tiene definido un atributo "BatchRequirement", se utilizará ese valor.
+            // Puedes ajustar la clave ("BatchRequirement") según tu convención.
+            if (attribDouble != null && attribDouble.ContainsKey("BatchRequirement"))
+            {
+                return (int)attribDouble["BatchRequirement"];
+            }
+            return null;
+        }
+
+        public double? GetLabelValue(string label)
+        {
+            if (attribDouble != null && attribDouble.ContainsKey(label))
+            {
+                return attribDouble[label];
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Propiedad que retorna todas las etiquetas del ítem como un diccionario de string a object.
+        /// Se utiliza para la validación en estrategias de entrada.
+        /// </summary>
+        public Dictionary<string, object> Labels
+        {
+            get
+            {
+                Dictionary<string, object> dict = new Dictionary<string, object>();
+                if (attribDouble != null)
+                {
+                    foreach (var kvp in attribDouble)
+                    {
+                        dict[kvp.Key] = kvp.Value;
+                    }
+                }
+                return dict;
+            }
+        }
+
+        /// <summary>
+        /// Devuelve todas las etiquetas del ítem.
+        /// </summary>
+        public Dictionary<string, object> GetAllLabels()
+        {
+            return Labels;
+        }
+
     }
 }
 

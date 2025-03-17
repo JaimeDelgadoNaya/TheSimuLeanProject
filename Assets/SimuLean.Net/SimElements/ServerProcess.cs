@@ -16,6 +16,7 @@ namespace SimuLean
         DoubleRandomProcess delay;
         ArrayList itemsOrdered;
 
+
         public int state = 0;
         //0: idle
         //1: bussy
@@ -23,6 +24,17 @@ namespace SimuLean
 
         int typeItem;
         //0:no type
+
+        public Item GetItem()
+        {
+            return theItem;
+        }
+
+        // Método para establecer el ítem, si es necesario.
+        public void SetItem(Item item)
+        {
+            theItem = item;
+        }
 
         public ServerProcess(WorkStation myServer, DoubleRandomProcess randomDelay, int capacity)
         {
@@ -110,5 +122,53 @@ namespace SimuLean
         {
             itemsOrdered.Clear();
         }
+        // --- Nuevos métodos para compatibilidad con Combiner ---
+
+        /// <summary>
+        /// Permite establecer el estado del proceso usando el enum State.
+        /// Mappea: IDLE = 0, BUSY = 1, BLOCKED = 2.
+        /// </summary>
+        public void SetState(State newState)
+        {
+            switch (newState)
+            {
+                case State.IDLE:
+                    state = 0;
+                    break;
+                case State.RECEIVING:
+                    state = 1;
+                    break;
+                case State.BUSY:
+                    state = 2;
+                    break;
+                case State.BLOCKED:
+                    state = 3;
+                    break;
+                default:
+                    state = 0;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Retorna el estado actual del proceso en forma de enum State.
+        /// </summary>
+        public State GetState()
+        {
+            switch (state)
+            {
+                case 0:
+                    return State.IDLE;
+                case 1:
+                    return State.RECEIVING;
+                case 2:
+                    return State.BUSY;
+                case 3:
+                    return State.BLOCKED;
+                default:
+                    return State.IDLE;
+            }
+        }
     }
 }
+  
