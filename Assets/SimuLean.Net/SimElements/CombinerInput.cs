@@ -18,6 +18,7 @@ namespace SimuLean
         Combiner arrivalListener;
         InputStrategy inputStrategy;
 
+
         public CombinerInput(int capacity, Combiner arrivalListener, int inputId, string inputName, SimClock clock, InputStrategy inputStrategy)
             : base(inputName, clock)
         {
@@ -37,23 +38,27 @@ namespace SimuLean
             Debug.Log($"[CombinerInput] Start(): Entrada {inputId} iniciada, cola limpia y currentItems = {currentItems}.");
         }
 
+        /// <summary>
+        /// Libera hasta 'quantity' ítems de la cola y actualiza currentItems.
+        /// Se llama NotifyAvaliable() una sola vez si se libera al menos un ítem.
+        /// </summary>
         public Queue<Item> Release(int quantity)
         {
             Queue<Item> released = new Queue<Item>();
             Debug.Log($"[CombinerInput] Release(): Entrada {inputId} intentando liberar {quantity} ítems.");
-            for (int i = 0; i < quantity; i++)
+            int releasedCount = 0;
+            // Usamos while para liberar mientras haya ítems y no se supere la cantidad requerida.
+            while (releasedCount < quantity && itemsQ.Count > 0)
             {
-                if (itemsQ.Count > 0)
-                {
-                    released.Enqueue(itemsQ.Dequeue());
-                    currentItems--;
-                    arrivalListener.NotifyAvaliable();
-                    Debug.Log($"[CombinerInput] Release(): Ítem liberado. Nuevo currentItems = {currentItems}.");
-                }
-                else
-                {
-                    break;
-                }
+                released.Enqueue(itemsQ.Dequeue());
+                currentItems--;
+                releasedCount++;
+                Debug.Log($"[CombinerInput] Release(): Ítem liberado. currentItems ahora es {currentItems}.");
+            }
+            // Notificar disponibilidad si se liberó al menos un ítem.
+            if (releasedCount > 0)
+            {
+                arrivalListener.NotifyAvaliable();
             }
             return released;
         }
@@ -84,8 +89,10 @@ namespace SimuLean
                 && arrivalListener.IsMainReceiving())
             {
                 currentItems++;
-                theItem.SetConstrainedInput(inputId);
+                theItem.SetConstrainedInput(this.inputId);
                 itemsQ.Enqueue(theItem);
+                arrivalListener.GetVElement().LoadItem(theItem);
+                arrivalListener.ItemReceived(theItem, inputId);
                 Debug.Log($"[CombinerInput] Receive(): Ítem {theItem.GetId()} encolado en entrada {inputId}. Nuevo currentItems = {currentItems}.");
 
                 bool compRec = arrivalListener.ComponentReceived(theItem, inputId);

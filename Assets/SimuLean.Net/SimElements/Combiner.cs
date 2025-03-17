@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 using UnityEngine;
 
 namespace SimuLean
@@ -12,18 +13,20 @@ namespace SimuLean
     public class Combiner : Element, ArrivalListener, WorkStation
     {
         // Estructuras para manejo de múltiples procesos
-        private Queue<ServerProcess> idleProcesses;
+        private Queue<ServerProcess> idleProccesses;
         private List<ServerProcess> workInProgress;
         private Queue<ServerProcess> completed;
         private int capacity;
 
-        private List<int> requirements;
+        CombinerInput[] inputs;
+        int[] requirements;
         private DoubleRandomProcess delayStrategy;
+        string name;
         private bool batchMode;
         private InputStrategy pullMode;
         private bool updateRequirementsEnabled;
         private List<string> updateLabels;
-        private List<CombinerInput> inputs;
+        
 
         bool receivingItems = false;
         int completedItems;
@@ -34,9 +37,9 @@ namespace SimuLean
         /// requirements, delayStrategy, name, sClock, batchMode, pullMode, updateRequirements, updateLabels, capacity
         /// </summary>
         public Combiner(
-            List<int> requirements,
+            int[] requirements,
             DoubleRandomProcess delayStrategy,
-            string name,
+            String name,
             SimClock sClock,
             bool batchMode = false,
             InputStrategy pullMode = null,
@@ -45,25 +48,27 @@ namespace SimuLean
             int capacity = 1)
             : base(name, sClock)
         {
-            this.requirements = new List<int>(requirements);
+            this.requirements = requirements;
             this.delayStrategy = delayStrategy;
+            this.name = name;
             this.batchMode = batchMode;
             this.pullMode = pullMode ?? new DefaultStrategy();
             this.updateRequirementsEnabled = updateRequirements;
             this.updateLabels = updateLabels;
             this.capacity = capacity;
 
-            idleProcesses = new Queue<ServerProcess>(capacity);
+            idleProccesses = new Queue<ServerProcess>(capacity);
             workInProgress = new List<ServerProcess>(capacity);
             completed = new Queue<ServerProcess>(capacity);
 
             // Crear una entrada (CombinerInput) por cada requerimiento utilizando el nuevo constructor
-            inputs = new List<CombinerInput>();
-            for (int i = 0; i < requirements.Count; i++)
+            inputs = new CombinerInput[requirements.Length];
+
+            for (int i = 0; i < inputs.Length; i++)
             {
-                inputs.Add(new CombinerInput(requirements[i], this, i, $"{name}.Input{i}", sClock, this.pullMode));
+                inputs[i] = (new CombinerInput(requirements[i], this, i, $"{name}.Input{i}", sClock, this.pullMode));
             }
-            Debug.Log($"{GetName()}: Constructor de Combiner completado. Número de entradas: {inputs.Count}");
+            Debug.Log($"{GetName()}: Constructor de Combiner completado. Número de entradas: {inputs.Length}");
         }
 
         /// <summary>
@@ -73,7 +78,7 @@ namespace SimuLean
         public override void Start()
         {
             Debug.Log($"{GetName()}: Start() de Combiner invocado.");
-            idleProcesses.Clear();
+            idleProccesses.Clear();
             workInProgress.Clear();
             completed.Clear();
 
@@ -82,19 +87,95 @@ namespace SimuLean
             {
                 ServerProcess process = new ServerProcess(this, delayStrategy, 1);
                 process.SetState(State.IDLE);
-                idleProcesses.Enqueue(process);
+                idleProccesses.Enqueue(process);
             }
 
             // Iniciar cada entrada
-            foreach (var input in inputs)
+            for (int i = 0; i < inputs.Length; i++)
             {
-                input.Start();
-                Debug.Log($"{GetName()}: Entrada {inputs.IndexOf(input)} inicializada (Start() de CombinerInput).");
+                inputs[i].Start();
             }
-
             completedItems = 0;
         }
 
+        public CombinerInput GetComponentInput(int i)
+        {
+            if (i < 0 || i >= inputs.Length)
+            {
+                Debug.LogError($"{GetName()}: Índice {i} fuera de rango. Cantidad de entradas: {inputs.Length}");
+                return null;
+            }
+            return inputs[i];
+        }
+
+
+        /// <summary>
+        /// Retorna el número de entradas.
+        /// </summary>
+        public int GetInputsCount()
+        {
+            return inputs.Length;
+        }
+
+        public override int GetQueueLength()
+        {
+            int q = 0;
+            foreach (CombinerInput ci in inputs)
+            {
+                q += ci.GetQueueLength();
+            }
+            return workInProgress.Count + completed.Count + q;
+        }
+        override public int GetFreeCapacity()
+        {
+            return capacity;
+        }
+
+        public int GetCompletedItems()
+        {
+            return completedItems;
+        }
+
+        string WorkStation.GetName()
+        {
+            return name;
+        }
+
+       
+        public override bool Unblock()
+        {
+            if (completed.Count > 0)
+            {
+                ServerProcess Process;
+                Item theItem;
+
+                Process = completed.Peek();
+                theItem = Process.theItem;
+
+                if (GetOutput().SendItem(theItem, this))
+                {
+
+                    completed.Dequeue();
+
+                    idleProccesses.Enqueue(Process);
+
+                    vElement.ReportState("Exit");
+
+                    CheckRequirements();
+
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+            }
+            else
+            {
+                return false;
+            }
+        }
         /// <summary>
         /// Recibe un ítem, actualiza la estrategia y verifica requerimientos.
         /// </summary>
@@ -106,7 +187,18 @@ namespace SimuLean
             CheckRequirements();
             return true;
         }
+        void ArrivalListener.ItemReceived(Item theItem, int source)
+        {
+            if (!receivingItems)
+            {
+                CheckRequirements();
+            }
+        }
 
+        VElement ArrivalListener.GetVElement()
+        {
+            return vElement;
+        }
         /// <summary>
         /// Notifica que una entrada ha recibido un ítem, para desencadenar la verificación.
         /// </summary>
@@ -147,7 +239,7 @@ namespace SimuLean
             {
                 string label = updateLabels[i];
                 var labelValue = theItem.GetLabelValue(label);
-                if (labelValue != null && i < inputs.Count)
+                if (labelValue != null && i < inputs.Length)
                 {
                     int newReq = Convert.ToInt32(labelValue);
                     requirements[i] = newReq;
@@ -163,14 +255,14 @@ namespace SimuLean
         /// </summary>
         private void CheckRequirements()
         {
-            if (idleProcesses.Count == 0)
+            if (idleProccesses.Count == 0)
             {
                 Debug.Log($"{GetName()}: No hay procesos inactivos disponibles.");
                 return;
             }
 
             bool ready = true;
-            for (int i = 0; i < inputs.Count; i++)
+            for (int i = 0; i < inputs.Length; i++)
             {
                 int qLength = inputs[i].GetQueueLength();
                 if (qLength < requirements[i])
@@ -189,9 +281,9 @@ namespace SimuLean
             {
                 Debug.Log($"{GetName()}: Todos los requerimientos cumplidos. Liberando ítems.");
                 Item newItem = CreateNewItem();
-                ServerProcess process = idleProcesses.Dequeue();
+                ServerProcess process = idleProccesses.Dequeue();
 
-                for (int i = 0; i < inputs.Count; i++)
+                for (int i = 0; i < inputs.Length; i++)
                 {
                     // Release ahora devuelve Queue<Item> según el nuevo CombinerInput
                     var items = inputs[i].Release(requirements[i]);
@@ -224,49 +316,15 @@ namespace SimuLean
                 Debug.Log($"{GetName()}: Requerimientos no cumplidos, esperando más ítems.");
             }
         }
-
-        /// <summary>
-        /// Intenta desbloquear el Combiner enviando ítems completados.
-        /// </summary>
-        public override bool Unblock()
+        Item CreateNewItem()
         {
-            Debug.Log($"{GetName()}: Unblock() invocado.");
-            if (completed.Count > 0)
-            {
-                ServerProcess process = completed.Peek();
-                Item theItem = process.GetItem();
-                if (GetOutput().SendItem(theItem, this))
-                {
-                    completed.Dequeue();
-                    idleProcesses.Enqueue(process);
-                    vElement.ReportState("Exit");
-                    CheckRequirements();
-                    Debug.Log($"{GetName()}: Unblock() exitoso, proceso reiniciado a IDLE.");
-                    return true;
-                }
-                else
-                {
-                    Debug.LogWarning($"{GetName()}: Unblock() falló al enviar el item.");
-                    return false;
-                }
-            }
-            return false;
-        }
+            Item newItem = new Item(simClock.GetSimulationTime());
+            newItem.SetId("type", 1, 1);
 
-        // Implementación explícita de ArrivalListener
-        void ArrivalListener.ItemReceived(Item theItem, int source)
-        {
-            if (!receivingItems)
-            {
-                CheckRequirements();
-            }
-        }
+            newItem.vItem = vElement.GenerateItem(0);
 
-        VElement ArrivalListener.GetVElement()
-        {
-            return vElement;
+            return newItem;
         }
-
         /// <summary>
         /// Completa el proceso del servidor enviando el ítem resultante.
         /// </summary>
@@ -279,7 +337,7 @@ namespace SimuLean
             if (GetOutput().SendItem(theItem, this))
             {
                 process.SetState(State.IDLE);
-                idleProcesses.Enqueue(process);
+                idleProccesses.Enqueue(process);
                 vElement.ReportState("Exit");
                 CheckRequirements();
                 Debug.Log($"{GetName()}: Proceso completado, estado reiniciado a IDLE.");
@@ -292,54 +350,11 @@ namespace SimuLean
             }
         }
 
-        /// <summary>
-        /// Crea un nuevo ítem usando el tiempo actual de la simulación.
-        /// </summary>
-        public Item CreateNewItem()
-        {
-            Item newItem = new Item(simClock.GetSimulationTime());
-            Debug.Log($"{GetName()}: Nuevo ítem creado con tiempo {simClock.GetSimulationTime()}.");
-            return newItem;
-        }
-
-        /// <summary>
-        /// Retorna una entrada en la posición indicada.
-        /// </summary>
-        public CombinerInput GetComponentInput(int i)
-        {
-            return inputs[i];
-        }
-
-        /// <summary>
-        /// Retorna el número de entradas.
-        /// </summary>
-        public int GetInputsCount()
-        {
-            return inputs.Count;
-        }
-
         public override bool CheckAvaliability(Item theItem)
         {
             return true;
         }
-
-        public override int GetQueueLength()
-        {
-            int q = 0;
-            foreach (var input in inputs)
-            {
-                q += input.GetQueueLength();
-            }
-            q += workInProgress.Count;
-            q += completed.Count;
-            return q;
-        }
-
-        public override int GetFreeCapacity()
-        {
-            return capacity;
-        }
-
+    
         /// <summary>
         /// Notifica disponibilidad invocando la verificación de requerimientos.
         /// </summary>
@@ -354,7 +369,7 @@ namespace SimuLean
         /// </summary>
         public bool IsMainReceiving()
         {
-            if (idleProcesses.Count > 0)
+            if (idleProccesses.Count > 0)
             {
                 Debug.Log($"{GetName()}: IsMainReceiving() retorna true (procesos inactivos disponibles).");
                 return true;
@@ -385,12 +400,12 @@ namespace SimuLean
             }
             return myItems;
         }
-
-        // Implementación explícita de la interfaz WorkStation
-        string WorkStation.GetName()
+        public void SetCapacity(int capacity)
         {
-            return GetName();
+            this.capacity = capacity;
         }
+
+
     }
 
     public enum State
