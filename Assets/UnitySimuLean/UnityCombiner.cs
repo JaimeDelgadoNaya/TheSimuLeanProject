@@ -32,12 +32,26 @@ namespace UnitySimuLean
         Vector3 odVector;
         private Combiner theCombiner;               // Instancia interna del Combiner.
 
-        
+        //Animation
+        public Animator serverAnimator;
 
         void Start()
         {
             // Se añade este componente al reloj de simulación.
             UnitySimClock.Instance.Elements.Add(this);
+        }
+        // Update is called once per frame
+        void FixedUpdate()
+        {
+            if (serverAnimator != null && theCombiner != null)
+            {
+                if (theCombiner.GetItems().Count > 0)
+                {
+                    serverAnimator.SetBool("WorkInProgress", true);
+                }
+                else
+                    serverAnimator.SetBool("WorkInProgress", false);
+            }
         }
 
         override public void ConnectSim()
@@ -128,6 +142,7 @@ namespace UnitySimuLean
                 i++;
             }
         }
+
         public override Element GetElement()
         {
             return theCombiner;
@@ -147,22 +162,69 @@ namespace UnitySimuLean
             return newItem;
         }
 
+        
+        /// <summary>
+        /// Carga el ítem principal en la posición base. Si batchMode = true, 
+        /// también puede procesar sus sub-ítems para mostrarlos visualmente.
+        /// </summary>
         void VElement.LoadItem(Item vItem)
         {
             GameObject gItem = vItem.vItem as GameObject;
             if (gItem != null)
             {
-                // Posicionar el ítem basado en itemPosition y separarlo según la cantidad total en la cola.
+                // Posicionar el ítem principal.
                 gItem.transform.position = itemPosition.position + new Vector3(0f, separation * (theCombiner.GetQueueLength() - 1), 0f);
+
+                // Si estamos en modo batch y el ítem principal tiene sub-ítems, anidarlos visualmente.
+                if (batchMode && vItem.GetSubItems() != null)
+                {
+                    foreach (Item sub in vItem.GetSubItems())
+                    {
+                        // Asegurarnos de que tenga un objeto visual:
+                        if (sub.vItem == null)
+                        {
+                            sub.vItem = (this as VElement).GenerateItem(sub.GetId());
+                            // sub.GetId() o algún identificador que quieras
+                        }
+                        // Posicionar cada sub-ítem como hijo del principal
+                        if (sub.vItem is GameObject subGItem)
+                        {
+                            // Anidarlo al ítem principal (opcional)
+                            subGItem.transform.SetParent(gItem.transform, worldPositionStays: false);
+
+                            // Ajustar su posición o colocarlo alrededor:
+                            subGItem.transform.localPosition = new Vector3(
+                                Random.Range(-0.2f, 0.2f), // por ejemplo, una dispersión leve
+                                Random.Range(-0.2f, 0.2f),
+                                0f
+                            );
+                            // Podrías asignar otra lógica de posición si quieres, p.e. un círculo, etc.
+                        }
+                    }
+                }
             }
         }
 
-        
 
+        
+        /// <summary>
+        /// Descarga el ítem principal y, si estamos en modo batch, también destruye los sub-ítems.
+        /// </summary>
         void VElement.UnloadItem(Item vItem)
         {
             if (vItem.vItem is GameObject gItem)
             {
+                // Si batchMode == true, podemos destruir los sub-ítems antes de destruir el principal.
+                if (batchMode && vItem.GetSubItems() != null)
+                {
+                    foreach (Item sub in vItem.GetSubItems())
+                    {
+                        if (sub.vItem is GameObject subGItem)
+                        {
+                            Destroy(subGItem);
+                        }
+                    }
+                }
                 Destroy(gItem);
             }
         }
@@ -172,7 +234,16 @@ namespace UnitySimuLean
             Queue<Item> items = theCombiner.GetItems();
             foreach (Item it in items)
             {
-                Destroy(it.vItem as GameObject);
+                if (it.vItem is GameObject go) Destroy(go);
+
+                // En batch mode, opcionalmente podrías destruir sub-ítems:
+                if (batchMode && it.GetSubItems() != null)
+                {
+                    foreach (Item sub in it.GetSubItems())
+                    {
+                        if (sub.vItem is GameObject subGo) Destroy(subGo);
+                    }
+                }
             }
             Debug.Log($"{this.name}: RestartSim() invocado, reiniciando StartSim().");
             StartSim();

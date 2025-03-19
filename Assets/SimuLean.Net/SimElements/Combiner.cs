@@ -279,6 +279,8 @@ namespace SimuLean
 
             if (ready)
             {
+                completedItems++;
+                receivingItems = true;
                 Debug.Log($"{GetName()}: Todos los requerimientos cumplidos. Liberando ítems.");
                 Item newItem = CreateNewItem();
                 ServerProcess process = idleProccesses.Dequeue();
@@ -291,19 +293,23 @@ namespace SimuLean
                     {
                         if (batchMode)
                         {
+                            vElement.UnloadItem(item);
                             newItem.AddItem(item);
                             Debug.Log($"{GetName()}: Ítem {item.GetId()} agregado al item principal (batchMode).");
                         }
                         else
                         {
+                            vElement.UnloadItem(item);
                             Debug.Log($"{GetName()}: Ítem {item.GetId()} liberado de la entrada {i}.");
                         }
                     }
                 }
 
+                receivingItems = false;
                 process.SetItem(newItem);
                 process.SetState(State.BUSY);
                 workInProgress.Add(process);
+                vElement.ReportState("Sort");
                 float delayTime = (float)process.GetDelay();
                 Debug.Log($"{GetName()}: Requerimientos completos. Programando evento con retardo {delayTime}.");
                 simClock.ScheduleEvent(process, delayTime);

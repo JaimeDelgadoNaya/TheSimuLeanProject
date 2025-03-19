@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace SimuLean
+﻿namespace SimuLean
 {
     /// <summary>
     /// Class that simulates 1 to 1 links (simple links) between elements.
@@ -14,12 +12,8 @@ namespace SimuLean
 
         static public void CreateLink(Element origin, Element destination)
         {
-            if (origin == null)
-                throw new ArgumentNullException("origin", "El elemento origin es null");
-            if (destination == null)
-                throw new ArgumentNullException("destination", "El elemento destination es null");
-
             SimpleLink theLink = new SimpleLink(origin, destination);
+
             origin.SetOutput(theLink);
             destination.SetInput(theLink);
         }

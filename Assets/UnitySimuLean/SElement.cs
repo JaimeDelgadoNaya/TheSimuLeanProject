@@ -32,18 +32,8 @@ namespace UnitySimuLean
         /// </summary>
         public virtual void ConnectSim()
         {
-            if (nextElement == null)
-            {
-                Debug.LogWarning($"{this.name}: nextElement es null.");
-            }
-            else if (nextElement.GetElement() == null)
-            {
-                Debug.LogWarning($"{this.name}: nextElement.GetElement() retorna null. Asegúrate de que el destino esté inicializado correctamente.");
-            }
-            else
-            {
+            if (nextElement != null)
                 SimpleLink.CreateLink(GetElement(), nextElement.GetElement());
-            }
 
             if (myPreviousLink != null)
                 myPreviousLink.outputs.Add(this);

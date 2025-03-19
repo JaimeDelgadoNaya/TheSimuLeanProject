@@ -12,7 +12,7 @@ namespace UnitySimuLean
 
         ItemsQueue theQueue;
 
-        private int capacity = 1;
+        public int capacity = 1;
 
         public float separation = 1f;
 

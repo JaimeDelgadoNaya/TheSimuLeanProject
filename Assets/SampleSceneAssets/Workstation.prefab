@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6813174212234330458}
   - component: {fileID: 6813174212234330459}
   - component: {fileID: 6813174212234330460}
-  - component: {fileID: 2850409087678907264}
+  - component: {fileID: 7552766603204929876}
   - component: {fileID: 6813174212234330456}
   m_Layer: 0
   m_Name: Workstation
@@ -99,14 +99,14 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &2850409087678907264
+--- !u!114 &7552766603204929876
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6813174212234330461}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b6be1555bf0ec734e9bb5eefe4d46d05, type: 3}
   m_Name: 
@@ -114,7 +114,9 @@ MonoBehaviour:
   nextElement: {fileID: 0}
   myPreviousLink: {fileID: 0}
   myNextLink: {fileID: 0}
-  initialBatchQuantity: 1
+  myInputs: []
+  requirements: 0200000002000000
+  initialBatchQuantity: 0200000002000000
   meanDelay: 5
   batchMode: 0
   updateRequirements: 0
@@ -123,8 +125,8 @@ MonoBehaviour:
   itemPosition: {fileID: 0}
   outItemPosition: {fileID: 0}
   separation: 0
-  cTime: 2
-  capacity: 1
+  cTime: 0
+  capacity: 0
   elementName: Combiner
 --- !u!114 &6813174212234330456
 MonoBehaviour:
@@ -133,7 +135,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6813174212234330461}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ac382318973e9db42a04191c33a1c7ee, type: 3}
   m_Name: 
