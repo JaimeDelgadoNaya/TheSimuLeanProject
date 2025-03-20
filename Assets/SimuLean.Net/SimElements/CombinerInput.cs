@@ -4,136 +4,178 @@ using UnityEngine;
 namespace SimuLean
 {
     /// <summary>
-    /// CombinerInput: Representa la entrada del Combiner.
-    /// Adaptado para heredar de Element y asemejarse en estructura a ConstrainedInput.
-    /// Opción B: Se mantiene la verificación de arrivalListener.IsMainReceiving() en Receive() y CheckAvaliability().
-    /// Se requiere que Combiner.IsMainReceiving() retorne true cuando haya procesos inactivos (IDLE) o en RECEIVING.
+    /// CombinerInput: Representa la entrada del Combiner, similar a la versión en Python.
     /// </summary>
     public class CombinerInput : Element
     {
         int capacity;
         int currentItems;
         int inputId;
-        Queue<Item> itemsQ;
-        Combiner arrivalListener;
+        Queue<Item> itemsQueue;
+        ArrivalListener arrivalListener;
         InputStrategy inputStrategy;
 
-
-        public CombinerInput(int capacity, Combiner arrivalListener, int inputId, string inputName, SimClock clock, InputStrategy inputStrategy)
-            : base(inputName, clock)
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="capacity">Capacidad máxima de la entrada.</param>
+        /// <param name="arrivalListener">Objeto ArrivalListener (por ejemplo, el Combiner) que recibirá notificaciones.</param>
+        /// <param name="inputId">Identificador de la entrada.</param>
+        /// <param name="name">Nombre de la entrada.</param>
+        /// <param name="simClock">Reloj de simulación.</param>
+        /// <param name="inputStrategy">Estrategia para validar los ítems; si es nula se usa DefaultStrategy.</param>
+        public CombinerInput(int capacity, ArrivalListener arrivalListener, int inputId, string name, SimClock simClock, InputStrategy inputStrategy = null)
+            : base(name, simClock)
         {
             this.capacity = capacity;
+            this.currentItems = 0;
             this.inputId = inputId;
+            // Se inicializa la cola con la capacidad indicada.
+            itemsQueue = new Queue<Item>(capacity);
             this.arrivalListener = arrivalListener;
-            this.inputStrategy = inputStrategy;
-            itemsQ = new Queue<Item>(capacity);
-            currentItems = 0;
-            Debug.Log($"[CombinerInput] Constructor: Entrada {inputId} creada con capacidad {capacity}.");
+            // Si no se proporciona una estrategia, se utiliza la estrategia por defecto.
+            this.inputStrategy = inputStrategy ?? new DefaultStrategy();
         }
 
+        /// <summary>
+        /// Inicializa la entrada: limpia la cola y reinicia el contador de ítems.
+        /// </summary>
         public override void Start()
         {
-            itemsQ.Clear();
+            itemsQueue.Clear();
             currentItems = 0;
             Debug.Log($"[CombinerInput] Start(): Entrada {inputId} iniciada, cola limpia y currentItems = {currentItems}.");
         }
 
         /// <summary>
-        /// Libera hasta 'quantity' ítems de la cola y actualiza currentItems.
-        /// Se llama NotifyAvaliable() una sola vez si se libera al menos un ítem.
+        /// Libera hasta 'quantity' ítems de la cola.
         /// </summary>
+        /// <param name="quantity">Cantidad de ítems a liberar.</param>
+        /// <returns>Cola con los ítems liberados.</returns>
         public Queue<Item> Release(int quantity)
         {
-            Queue<Item> released = new Queue<Item>();
-            Debug.Log($"[CombinerInput] Release(): Entrada {inputId} intentando liberar {quantity} ítems.");
-            int releasedCount = 0;
-            // Usamos while para liberar mientras haya ítems y no se supere la cantidad requerida.
-            while (releasedCount < quantity && itemsQ.Count > 0)
+            Queue<Item> releasedItems = new Queue<Item>();
+
+            for (int i = 0; i < quantity; i++)
             {
-                released.Enqueue(itemsQ.Dequeue());
-                currentItems--;
-                releasedCount++;
-                Debug.Log($"[CombinerInput] Release(): Ítem liberado. currentItems ahora es {currentItems}.");
+                if (itemsQueue.Count > 0)
+                {
+                    Item theItem = itemsQueue.Dequeue();
+                    releasedItems.Enqueue(theItem);
+                    currentItems--;
+                    GetInput().NotifyAvaliable(this);
+                    Debug.Log($"[CombinerInput] Release(): Ítem liberado. currentItems ahora es {currentItems}.");
+                }
+                else
+                {
+                    break;
+                }
             }
-            // Notificar disponibilidad si se liberó al menos un ítem.
-            if (releasedCount > 0)
-            {
-                arrivalListener.NotifyAvaliable();
-            }
-            return released;
+            return releasedItems;
         }
 
+        /// <summary>
+        /// Devuelve el número de ítems actualmente en la cola.
+        /// </summary>
         public override int GetQueueLength()
         {
             Debug.Log($"[CombinerInput] GetQueueLength(): Entrada {inputId} tiene {currentItems} ítems.");
             return currentItems;
         }
 
+        /// <summary>
+        /// Devuelve la capacidad libre.
+        /// </summary>
         public override int GetFreeCapacity()
         {
             return capacity - currentItems;
         }
 
+        /// <summary>
+        /// Notifica la disponibilidad llamando al método NotifyAvaliable del objeto Link obtenido vía GetInput().
+        /// </summary>
         public override bool Unblock()
         {
             Debug.Log($"[CombinerInput] Unblock(): Notificando disponibilidad desde entrada {inputId}.");
-            arrivalListener.NotifyAvaliable();
+            // Se asume que GetInput() retorna un objeto que implemente la interfaz Link.
+            if(this.CheckAvaliability(null))
+            {
+                this.Release(itemsQueue.Count);
+                return true;
+            }
+
+            this.GetInput().NotifyAvaliable(this);
             return true;
         }
 
+        /// <summary>
+        /// Recibe un ítem. Si cumple la disponibilidad, lo encola y notifica al ArrivalListener.
+        /// </summary>
         public override bool Receive(Item theItem)
         {
-            // Se conserva la verificación de arrivalListener.IsMainReceiving()
-            if ((currentItems < capacity || capacity < 0)
-                && inputStrategy.IsValid(theItem)
-                && arrivalListener.IsMainReceiving())
+            if (CheckAvaliability(theItem))
             {
+                Debug.Log($"[CombinerInput] Receive(): Aceptando ítem {theItem.GetId()} en entrada {inputId}.");
                 currentItems++;
                 theItem.SetConstrainedInput(this.inputId);
-                itemsQ.Enqueue(theItem);
+                itemsQueue.Enqueue(theItem);
                 arrivalListener.GetVElement().LoadItem(theItem);
                 arrivalListener.ItemReceived(theItem, inputId);
-                Debug.Log($"[CombinerInput] Receive(): Ítem {theItem.GetId()} encolado en entrada {inputId}. Nuevo currentItems = {currentItems}.");
-
-                bool compRec = arrivalListener.ComponentReceived(theItem, inputId);
-                if (!compRec)
+                // Se asume que arrivalListener es un Combiner:
+                Combiner combiner = arrivalListener as Combiner;
+                if (combiner != null)
                 {
-                    Debug.Log($"[CombinerInput] Receive(): ComponentReceived() devolvió false, notificando disponibilidad.");
-                    arrivalListener.NotifyAvaliable();
+                    combiner.ItemReceived(theItem, inputId);
                 }
+                this.GetInput().NotifyAvaliable(this);
                 return true;
             }
-            else
-            {
-                Debug.Log($"[CombinerInput] Receive(): No se pudo recibir el ítem {theItem.GetId()} en entrada {inputId}.");
-                return false;
-            }
+            return false;
         }
 
+        /// <summary>
+        /// Verifica si es posible recibir el ítem.
+        /// </summary>
         public override bool CheckAvaliability(Item theItem)
         {
-            // Se conserva la verificación de arrivalListener.IsMainReceiving()
-            bool available = ((currentItems < capacity || capacity < 0)
-                              && inputStrategy.IsValid(theItem)
-                              && arrivalListener.IsMainReceiving());
-            Debug.Log($"[CombinerInput] CheckAvaliability(): Ítem {theItem.GetId()} en entrada {inputId}: available = {available}.");
-            return available;
+            bool capacityOk = true;
+            bool valid = true;
+            //Si viene de Unblock
+            if (theItem != null)
+            {
+                capacityOk = (currentItems < capacity) || (capacity < 0);
+                valid = inputStrategy.IsValid(theItem);
+
+            }
+
+            // Forzamos mainReceiving a true para aceptar ítems sin depender del estado del Combiner:
+            bool mainReceiving = true; // hay programarlo
+            return capacityOk && valid && mainReceiving;
         }
 
+        /// <summary>
+        /// Devuelve la capacidad máxima de la entrada.
+        /// </summary>
         public int GetCapacity()
         {
             return capacity;
         }
 
+        /// <summary>
+        /// Actualiza la capacidad máxima de la entrada.
+        /// </summary>
         public void SetCapacity(int newCapacity)
         {
             capacity = newCapacity;
             Debug.Log($"[CombinerInput] SetCapacity(): Capacidad de entrada {inputId} actualizada a {capacity}.");
         }
 
+        /// <summary>
+        /// Devuelve la cola de ítems de la entrada.
+        /// </summary>
         public Queue<Item> GetItems()
         {
-            return itemsQ;
+            return itemsQueue;
         }
     }
 }
