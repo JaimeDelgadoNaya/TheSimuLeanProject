@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace SimuLean
 {
@@ -21,6 +22,7 @@ namespace SimuLean
         public override void Start()
         {
             numberIterms = 0;
+            Debug.Log($"[Sink] Start(): Inicializando Sink. Contador reiniciado a {numberIterms}.");
         }
 
         public override bool Unblock()
@@ -39,8 +41,10 @@ namespace SimuLean
 
         public override bool Receive(Item theItem)
         {
+            Debug.Log($"[Sink] Receive(): Se ha recibido el ítem {theItem.GetId()}. Eliminando el elemento.");
             vElement.LoadItem(theItem);
             numberIterms++;
+            Debug.Log($"[Sink] Receive(): Ítems procesados hasta el momento: {numberIterms}.");
             return true;
         }
 

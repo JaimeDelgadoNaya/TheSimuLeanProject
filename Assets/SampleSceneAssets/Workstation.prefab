@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6813174212234330458}
   - component: {fileID: 6813174212234330459}
   - component: {fileID: 6813174212234330460}
-  - component: {fileID: 6813174212234330456}
+  - component: {fileID: 4237847094431365153}
   m_Layer: 0
   m_Name: Workstation
   m_TagString: Untagged
@@ -98,7 +98,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &6813174212234330456
+--- !u!114 &4237847094431365153
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -113,8 +113,8 @@ MonoBehaviour:
   nextElement: {fileID: 0}
   myPreviousLink: {fileID: 0}
   myNextLink: {fileID: 0}
-  itemPosition: {fileID: 6813174212650934983}
-  outItemPosition: {fileID: 6813174213412063831}
+  itemPosition: {fileID: 0}
+  outItemPosition: {fileID: 0}
   elementName: WS
   cTime: 2
   capacity: 1

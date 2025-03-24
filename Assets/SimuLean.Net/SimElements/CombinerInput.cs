@@ -14,6 +14,7 @@ namespace SimuLean
         Queue<Item> itemsQueue;
         ArrivalListener arrivalListener;
         InputStrategy inputStrategy;
+        private int myConstrainedInput;
 
         /// <summary>
         /// Constructor.
@@ -115,42 +116,41 @@ namespace SimuLean
         {
             if (CheckAvaliability(theItem))
             {
-                Debug.Log($"[CombinerInput] Receive(): Aceptando ítem {theItem.GetId()} en entrada {inputId}.");
+                var visual = arrivalListener.GetVElement();
+                if (visual != null)
+                {
+                    visual.LoadItem(theItem);
+                }
+                else
+                {
+                    Debug.LogWarning("[CombinerInput] Receive(): No se encontró el elemento visual (vElement).");
+                }
+
                 currentItems++;
                 theItem.SetConstrainedInput(this.inputId);
                 itemsQueue.Enqueue(theItem);
-                arrivalListener.GetVElement().LoadItem(theItem);
+
                 arrivalListener.ItemReceived(theItem, inputId);
-                // Se asume que arrivalListener es un Combiner:
-                Combiner combiner = arrivalListener as Combiner;
-                if (combiner != null)
-                {
-                    combiner.ItemReceived(theItem, inputId);
-                }
+                // Notificamos a la conexión que la entrada está disponible
                 this.GetInput().NotifyAvaliable(this);
                 return true;
             }
             return false;
         }
 
+
+
+
+
         /// <summary>
         /// Verifica si es posible recibir el ítem.
         /// </summary>
         public override bool CheckAvaliability(Item theItem)
         {
-            bool capacityOk = true;
-            bool valid = true;
-            //Si viene de Unblock
-            if (theItem != null)
-            {
-                capacityOk = (currentItems < capacity) || (capacity < 0);
-                valid = inputStrategy.IsValid(theItem);
-
-            }
-
-            // Forzamos mainReceiving a true para aceptar ítems sin depender del estado del Combiner:
-            bool mainReceiving = true; // hay programarlo
-            return capacityOk && valid && mainReceiving;
+            bool capacityOk = (currentItems < capacity) || (capacity < 0);
+            bool valid = inputStrategy.IsValid(theItem);
+            Debug.Log($"[CombinerInput] CheckAvaliability (entrada {inputId}): capacityOk={capacityOk}, valid={valid}.");
+            return capacityOk && valid;
         }
 
         /// <summary>
