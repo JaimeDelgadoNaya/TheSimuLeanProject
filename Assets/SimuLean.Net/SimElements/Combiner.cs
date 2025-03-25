@@ -87,7 +87,10 @@ namespace SimuLean
 
         public bool IsMainReceiving(int inputId)
         {
-            return theProcess != null && (theProcess.GetState() == State.RECEIVING || theProcess.GetState() == State.IDLE);
+            //Esto no es correcto
+            //return theProcess != null && (theProcess.GetState() == State.RECEIVING || theProcess.GetState() == State.IDLE);
+
+            return theProcess != null && (theProcess.GetState() == State.RECEIVING);
         }
 
 
@@ -252,7 +255,7 @@ namespace SimuLean
                 idleProccesses.Enqueue(process);
                 vElement.ReportState("Exit");
                 GetInput().NotifyAvaliable(this);
-                CheckRequirements();
+                //CheckRequirements();
                 Debug.Log($"{GetName()}: Proceso completado, estado reiniciado a IDLE.");
             }
             else

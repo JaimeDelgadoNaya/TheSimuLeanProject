@@ -301,6 +301,11 @@ namespace SimuLean
         {
             this.capacity = capacity;
         }
+
+        public bool IsMainReceiving(int inputId)
+        {
+            return true;
+        }
     }
 }
 

@@ -127,6 +127,8 @@ namespace UnitySimuLean
 
         void VElement.ReportState(string msg)
         {
+
+            //Funcionamiento básico: Dejo el item que entró como princiapl (pallet) y elimino los 3Ds del resto.
             GameObject gItem;
             Queue<Item> items = theCombiner.GetItems();
             int i = 0;
