@@ -14,7 +14,6 @@ namespace SimuLean
         Queue<Item> itemsQueue;
         ArrivalListener arrivalListener;
         InputStrategy inputStrategy;
-        private int myConstrainedInput;
 
         /// <summary>
         /// Constructor.
@@ -64,7 +63,7 @@ namespace SimuLean
                     Item theItem = itemsQueue.Dequeue();
                     releasedItems.Enqueue(theItem);
                     currentItems--;
-                    GetInput().NotifyAvaliable(this);
+                    // GetInput().NotifyAvaliable(this); Esto no está
                     Debug.Log($"[CombinerInput] Release(): Ítem liberado. currentItems ahora es {currentItems}.");
                 }
                 else
@@ -99,11 +98,11 @@ namespace SimuLean
         {
             Debug.Log($"[CombinerInput] Unblock(): Notificando disponibilidad desde entrada {inputId}.");
             // Se asume que GetInput() retorna un objeto que implemente la interfaz Link.
-            if(this.CheckAvaliability(null))
-            {
-                this.Release(itemsQueue.Count);
-                return true;
-            }
+            //if(this.CheckAvaliability(null)) (Javi)
+            //{
+            //    this.Release(itemsQueue.Count);
+            //    return true;
+            //}
 
             this.GetInput().NotifyAvaliable(this);
             return true;
@@ -116,41 +115,41 @@ namespace SimuLean
         {
             if (CheckAvaliability(theItem))
             {
-                var visual = arrivalListener.GetVElement();
-                if (visual != null)
-                {
-                    visual.LoadItem(theItem);
-                }
-                else
-                {
-                    Debug.LogWarning("[CombinerInput] Receive(): No se encontró el elemento visual (vElement).");
-                }
-
+                Debug.Log($"[CombinerInput] Receive(): Aceptando ítem {theItem.GetId()} en entrada {inputId}.");
                 currentItems++;
                 theItem.SetConstrainedInput(this.inputId);
                 itemsQueue.Enqueue(theItem);
-
-                arrivalListener.ItemReceived(theItem, inputId);
-                // Notificamos a la conexión que la entrada está disponible
+                arrivalListener.GetVElement().LoadItem(theItem);
+                //Estaba mal programado (Javi)
+                arrivalListener.ItemReceived(theItem, inputId); 
                 this.GetInput().NotifyAvaliable(this);
+        
+                // Se asume que arrivalListener es un Combiner:
+                //Esto sobra (Javi)
+                //Combiner combiner = arrivalListener as Combiner;
+                //if (combiner != null)
+                //{
+                //    combiner.ItemReceived(theItem, inputId);
+                //}
+
                 return true;
             }
             return false;
         }
-
-
-
-
 
         /// <summary>
         /// Verifica si es posible recibir el ítem.
         /// </summary>
         public override bool CheckAvaliability(Item theItem)
         {
-            bool capacityOk = (currentItems < capacity) || (capacity < 0);
-            bool valid = inputStrategy.IsValid(theItem);
-            Debug.Log($"[CombinerInput] CheckAvaliability (entrada {inputId}): capacityOk={capacityOk}, valid={valid}.");
-            return capacityOk && valid;
+            bool capacityOk = true;
+            bool valid = true;
+
+            // Forzamos mainReceiving a true para aceptar ítems sin depender del estado del Combiner:
+            //Javi: Si fuerzas claro que no va a funcionar
+
+            bool mainReceiving = arrivalListener.IsMainReceiving(this.inputId); // hay programarlo
+            return capacityOk && valid && mainReceiving;
         }
 
         /// <summary>

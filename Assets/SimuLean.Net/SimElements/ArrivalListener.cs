@@ -13,6 +13,9 @@
         void ItemReceived(Item theItem, int source);
         
         VElement GetVElement();
+
+        // Falta este método
+        bool IsMainReceiving(int inputId);
     }
 }
 
