@@ -14,7 +14,7 @@ namespace UnitySimuLean
         public SElement[] myInputs;
         public int[] requirements = { 2};
         public int[] initialBatchQuantity = { 2 };      // Lista de requerimientos (capacidad) de cada entrada.
-        public double meanDelay = 5.0;                      // Retardo medio (para la estrategia de retardo constante).
+        
         public bool batchMode = false;                      // Modo batch: si true, agrega componentes al ítem padre; de lo contrario, crea un nuevo ítem compuesto.
         public bool updateRequirements = false;             // Si se deben actualizar dinámicamente los requerimientos.
         public string[] updateLabels;                       // Etiquetas para actualizar requerimientos (opcional).
@@ -26,7 +26,7 @@ namespace UnitySimuLean
         public float separation = 0f;
 
         // Parámetros adicionales:
-        public double cTime;                  // Para compatibilidad.
+        public double meanDelay = 5.0;                      // Retardo medio (para la estrategia de retardo constante).
         public int capacity;                  // Capacidad (para crear la lista de procesos).
         public string elementName = "Combiner";     // Nombre del elemento.
         Vector3 odVector;
@@ -34,6 +34,15 @@ namespace UnitySimuLean
 
         // Animation
         public Animator serverAnimator;
+        public VisualMode visualMode = VisualMode.MainOnly;
+
+        public enum VisualMode
+        {
+            //Stacked,   // Los items se apilan uno encima del otro. (No utilizar no funciona)
+            MainOnly,  // Se muestra solo el item principal y se destruyen los demás.
+            NewItem    // Se crea un item nuevo y se eliminan los items originales.
+        }
+
 
         void Start()
         {
@@ -127,18 +136,65 @@ namespace UnitySimuLean
 
         void VElement.ReportState(string msg)
         {
+            // Obtenemos la cola de ítems y la convertimos a lista.
+            Queue<Item> itemsQueue = theCombiner.GetItems();
+            List<Item> itemsList = new List<Item>(itemsQueue);
 
-            //Funcionamiento básico: Dejo el item que entró como princiapl (pallet) y elimino los 3Ds del resto.
-            GameObject gItem;
-            Queue<Item> items = theCombiner.GetItems();
-            int i = 0;
-            foreach (Item it in items)
+            if (visualMode == VisualMode.NewItem || visualMode == VisualMode.MainOnly)
             {
-                gItem = it.vItem as GameObject;
-                if (gItem != null)
-                    gItem.transform.position = itemPosition.position + new Vector3(0f, separation * i, 0f);
-                i++;
+                // En modo NewItem la creación y envío se gestiona en CompleteServerProcess.
+                // Se limpia la cola para evitar reprocesar el ítem principal.
+                itemsQueue.Clear();
             }
+            /*
+            else if (visualMode == VisualMode.Stacked)   //No utilizar no funciona
+            {
+                // Lista para acumular todos los GameObjects a apilar.
+                List<GameObject> stackItems = new List<GameObject>();
+
+                if (itemsList.Count > 0)
+                {
+                    // 1. El primer ítem es el principal.
+                    if (itemsList[0].vItem is GameObject mainGo)
+                    {
+                        stackItems.Add(mainGo);
+                    }
+                    // 2. Si el ítem principal tiene subítems (por ejemplo, items de inputs en batchMode),
+                    // se añaden al listado.
+                    if (itemsList[0].GetSubItems() != null)
+                    {
+                        foreach (Item sub in itemsList[0].GetSubItems())
+                        {
+                            if (sub.vItem is GameObject subGo)
+                            {
+                                stackItems.Add(subGo);
+                            }
+                        }
+                    }
+                    // 3. Si por alguna razón hay más ítems en la cola (además del principal), se agregan.
+                    for (int i = 1; i < itemsList.Count; i++)
+                    {
+                        if (itemsList[i].vItem is GameObject go)
+                        {
+                            stackItems.Add(go);
+                        }
+                    }
+                }
+
+                // Ahora, posicionamos todos los GameObjects recogidos en stackItems.
+                for (int i = 0; i < stackItems.Count; i++)
+                {
+                    GameObject go = stackItems[i];
+                    if (go != null)
+                    {
+                        go.SetActive(true);
+                        // Posición base para el principal y offset vertical para cada siguiente.
+                        go.transform.position = itemPosition.position + new Vector3(0f, separation * i, 0f);
+                    }
+                }
+            
+            }
+            */
         }
 
         public override Element GetElement()
@@ -165,6 +221,18 @@ namespace UnitySimuLean
         /// </summary>
         void VElement.LoadItem(Item vItem)
         {
+            if (visualMode == VisualMode.NewItem || visualMode == VisualMode.MainOnly)
+            {
+                // En modo NewItem, no se carga el ítem principal, se destruye su representación.
+                if (vItem.vItem is GameObject tempGItem)
+                {
+                    Destroy(tempGItem);
+                }
+                vItem.vItem = null;
+                return;
+            }
+
+            // Lógica original para otros modos:
             GameObject gItem = vItem.vItem as GameObject;
             if (gItem != null)
             {
@@ -179,7 +247,7 @@ namespace UnitySimuLean
                         }
                         if (sub.vItem is GameObject subGItem)
                         {
-                            subGItem.transform.SetParent(gItem.transform, worldPositionStays: false);
+                            subGItem.transform.SetParent(gItem.transform, false);
                             subGItem.transform.localPosition = new Vector3(
                                 Random.Range(-0.2f, 0.2f),
                                 Random.Range(-0.2f, 0.2f),
@@ -190,6 +258,10 @@ namespace UnitySimuLean
                 }
             }
         }
+
+
+
+
 
         /// <summary>
         /// Descarga el ítem principal y, en modo batch, también destruye los sub-ítems.

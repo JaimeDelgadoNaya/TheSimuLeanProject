@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using static UnitySimuLean.UnityCombiner;
+using UnitySimuLean;
 using Debug = UnityEngine.Debug;
+
+
 
 namespace SimuLean
 {
@@ -87,14 +91,8 @@ namespace SimuLean
 
         public bool IsMainReceiving(int inputId)
         {
-            //Esto no es correcto
-            //return theProcess != null && (theProcess.GetState() == State.RECEIVING || theProcess.GetState() == State.IDLE);
-
             return theProcess != null && (theProcess.GetState() == State.RECEIVING);
         }
-
-
-
 
         // Retorna la entrada (CombinerInput) correspondiente al índice dado.
         public CombinerInput GetComponentInput(int i)
@@ -247,24 +245,79 @@ namespace SimuLean
         // Completa el proceso del servidor: intenta enviar el ítem resultante y actualiza el estado.
         void WorkStation.CompleteServerProcess(ServerProcess process)
         {
-            Item theItem = process.theItem;
-            workInProgress.Remove(process);
-            if (GetOutput().SendItem(theItem, this))
+            UnityCombiner uc = vElement as UnityCombiner;
+            if (uc != null && uc.visualMode == VisualMode.NewItem)
             {
-                theProcess.SetState(State.IDLE);
-                idleProccesses.Enqueue(process);
-                vElement.ReportState("Exit");
-                GetInput().NotifyAvaliable(this);
-                //CheckRequirements();
-                Debug.Log($"{GetName()}: Proceso completado, estado reiniciado a IDLE.");
+                // 1. Crear el nuevo ítem combinado usando CreateNewItem().
+                Item newItem = CreateNewItem();
+                GameObject newCombinedItem = newItem.vItem as GameObject;
+                if (newCombinedItem != null)
+                {
+                    newCombinedItem.transform.position = uc.itemPosition.position;
+                }
+
+                // 2. Enviar el nuevo ítem combinado al siguiente elemento.
+                if (GetOutput().SendItem(newItem, this))
+                {
+                    Debug.Log($"{GetName()}: Proceso completado en modo NewItem, ítem combinado enviado.");
+
+                    // 3. Destruir el ítem principal (del next element) si existe.
+                    if (process.theItem != null && process.theItem.vItem is GameObject mainGo)
+                    {
+                        UnityEngine.Object.Destroy(mainGo);
+                    }
+                    process.SetItem(null);
+
+                    // 4. Limpiar la cola de ítems (inputs) para evitar acumulaciones.
+                    Queue<Item> itemsQueue = GetItems();
+                    foreach (Item it in new List<Item>(itemsQueue))
+                    {
+                        if (it.vItem is GameObject go)
+                        {
+                            UnityEngine.Object.Destroy(go);
+                        }
+                        it.vItem = null;
+                    }
+                    itemsQueue.Clear();
+
+                    // 5. Reinicializar el proceso creando una nueva instancia para evitar mantener el ítem principal anterior.
+                    ServerProcess newProcess = new ServerProcess(this, delayStrategy, 1);
+                    newProcess.SetState(State.IDLE);
+                    theProcess = newProcess;
+                    idleProccesses.Enqueue(newProcess);
+
+                    vElement.ReportState("Exit");
+                    GetInput().NotifyAvaliable(this);
+                }
+                else
+                {
+                    theProcess.SetState(State.BLOCKED);
+                    completed.Enqueue(process);
+                    Debug.LogWarning($"{GetName()}: No se pudo enviar el ítem combinado en modo NewItem.");
+                }
             }
             else
             {
-                theProcess.SetState(State.BLOCKED);
-                completed.Enqueue(process);
-                Debug.LogWarning($"{GetName()}: No se pudo enviar el ítem, proceso bloqueado.");
+                // Comportamiento original para otros modos.
+                Item theItem = process.theItem;
+                workInProgress.Remove(process);
+                if (GetOutput().SendItem(theItem, this))
+                {
+                    theProcess.SetState(State.IDLE);
+                    idleProccesses.Enqueue(process);
+                    vElement.ReportState("Exit");
+                    GetInput().NotifyAvaliable(this);
+                    Debug.Log($"{GetName()}: Proceso completado, estado reiniciado a IDLE.");
+                }
+                else
+                {
+                    theProcess.SetState(State.BLOCKED);
+                    completed.Enqueue(process);
+                    Debug.LogWarning($"{GetName()}: No se pudo enviar el ítem, proceso bloqueado.");
+                }
             }
         }
+
 
         // Verifica la disponibilidad del combiner (disponible si el proceso principal está en estado IDLE).
         public override bool CheckAvaliability(Item theItem)
@@ -278,11 +331,5 @@ namespace SimuLean
             ComponentReceived(theItem, source);
         }
     }
-    public enum State
-    {
-        IDLE = 1,
-        RECEIVING = 2,
-        BUSY = 3,
-        BLOCKED = 4
-    }
+    
 }
