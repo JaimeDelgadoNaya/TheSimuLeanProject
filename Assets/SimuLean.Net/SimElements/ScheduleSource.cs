@@ -35,7 +35,7 @@ namespace SimuLean
         private int currentPendingQ;       // Número de ítems pendientes en la fila mod 
         private Dictionary<string, string> currentRow; // Fila actual de datos (encabezados y valores) mod 
         private IEnumerator<Dictionary<string, string>> rowIterator; // Añadir esta línea para definir rowIterator
-
+        private List<Dictionary<string, string>> preprocessedRows; //Lista para reordenar filas de datos
         //constructor modificado con parametros opcionales Mod
 
         public ScheduleSource(String name, SimClock state, String fileName = null, Dictionary<string, List<string>> dataDict = null, Item modelItem = null, string sheetName = null) : base(name, state)
@@ -62,6 +62,14 @@ namespace SimuLean
             {
                 this.fileType = null;
             }
+            // Preprocesar las filas y ordenarlas por prioridad
+            preprocessedRows = GetRowIterator().ToList();
+            preprocessedRows.Sort((row1, row2) =>
+            {
+                int priority1 = row1.ContainsKey("Priority") && int.TryParse(row1["Priority"], out int p1) ? p1 : int.MaxValue;
+                int priority2 = row2.ContainsKey("Priority") && int.TryParse(row2["Priority"], out int p2) ? p2 : int.MaxValue;
+                return priority1.CompareTo(priority2);
+            });
 
 
         }
@@ -249,7 +257,7 @@ namespace SimuLean
             Item newItem = CreateItem();
             while (newItem != null)
             {
-                Debug.Log("Procesando ítem (ID: " + newItem.GetId() + ").");
+                Debug.Log("Denisa Procesando ítem (ID: " + newItem.GetId() + ", Prioridad: " + newItem.priority + ").");
                 // Intenta enviar el ítem; si no se puede, se añade a la cola de ítems bloqueados
                 if (!this.GetOutput().SendItem(newItem, this))
                 {
@@ -263,6 +271,7 @@ namespace SimuLean
             // Una vez procesados todos los ítems de la fila actual, programa el siguiente evento
             ScheduleNext();
         }
+
 
 
         Item CreateItem()
@@ -287,12 +296,18 @@ namespace SimuLean
             // Itera sobre cada clave en currentRow, omitiendo las básicas ("Time", "Name", "Q")
             foreach (var kvp in currentRow)
             {
-                if (kvp.Key == "Time" || kvp.Key == "Name" || kvp.Key == "Q")
+                if (kvp.Key == "Time" || kvp.Key == "Name" || kvp.Key == "Q" || kvp.Key == "Priority")
                     continue;
 
                 // Asumiendo que Item tiene un método SetLabelValue para asignar atributos
                 newItem.SetLabelValue(kvp.Key, kvp.Value);
                 Debug.Log("Atributo asignado: " + kvp.Key + " = " + kvp.Value);
+            }
+            // Asigna la prioridad si está presente
+            if (currentRow.ContainsKey("Priority") && int.TryParse(currentRow["Priority"], out int priority))
+            {
+                newItem.priority = priority;
+                Debug.Log("Prioridad asignada: " + priority);
             }
             newItem.vItem = vElement.GenerateItem(newItem.GetId());
             Debug.Log("vItem asignado al ítem.");
@@ -364,8 +379,6 @@ namespace SimuLean
             // Programa el siguiente evento en el simulador.
             simClock.ScheduleEvent(this, delay);
         }
-
-
 
         public Queue<Item> GetItems()
         {

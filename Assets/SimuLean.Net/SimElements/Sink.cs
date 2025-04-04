@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using UnityEngine;
 
 namespace SimuLean
@@ -44,6 +45,7 @@ namespace SimuLean
             Debug.Log($"[Sink] Receive(): Se ha recibido el ítem {theItem.GetId()}. Eliminando el elemento.");
             vElement.LoadItem(theItem);
             numberIterms++;
+
             Debug.Log($"[Sink] Receive(): Ítems procesados hasta el momento: {numberIterms}.");
             return true;
         }

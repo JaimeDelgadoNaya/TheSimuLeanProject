@@ -72,7 +72,8 @@ namespace UnitySimuLean
 
             for (int i = 0; i < myInputs.Length; i++)
             {
-                SimpleLink.CreateLink(myInputs[i].GetElement(), theCombiner.GetComponentInput(i));
+                GeneralLink.CreateLink(myInputs[i].GetElement(), new List<Element> { theCombiner.GetComponentInput(i) });
+                //SimpleLink.CreateLink(myInputs[i].GetElement(), theCombiner.GetComponentInput(i));
             }
 
             base.ConnectSim();

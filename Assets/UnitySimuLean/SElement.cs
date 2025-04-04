@@ -1,4 +1,5 @@
 ﻿using SimuLean;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnitySimuLean
@@ -33,7 +34,8 @@ namespace UnitySimuLean
         public virtual void ConnectSim()
         {
             if (nextElement != null)
-                SimpleLink.CreateLink(GetElement(), nextElement.GetElement());
+                //SimpleLink.CreateLink(GetElement(), nextElement.GetElement());
+                GeneralLink.CreateLink(GetElement(), new List<Element> { nextElement.GetElement() });
 
             if (myPreviousLink != null)
                 myPreviousLink.outputs.Add(this);
