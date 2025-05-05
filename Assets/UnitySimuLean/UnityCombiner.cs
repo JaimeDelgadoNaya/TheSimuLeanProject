@@ -108,10 +108,19 @@ namespace UnitySimuLean
                                         batchMode, null, updateRequirements, labels, capacity);
             Debug.Log($"{this.name}: Combiner creado.");
 
-            // Asignar este componente como interfaz visual (vElement) para reportar estado y gestionar ítems.
-            // Se usa la propiedad new en Combiner para asignar vElement.
-            theCombiner.vElement = this;
-            Debug.Log($"{this.name}: vElement asignado en el Combiner.");
+            if (Experimenter.HeadlessActive)
+            {
+                //Asignar un VElement nulo que no genera graficos
+                theCombiner.vElement = new NullVElement();
+            }
+            else
+            {
+                //Asignación normal para modo grafico
+                theCombiner.vElement = this;
+            }
+            Debug.Log($"{this.name}: vElement asignado ({(Experimenter.HeadlessActive ? "NullVElement" : "UnityVElement")}).");
+            
+            
 
             // Calcular vector de desplazamiento si outItemPosition está asignado.
             if (outItemPosition != null)

@@ -33,8 +33,15 @@ namespace UnitySimuLean
         override public void InitializeSim()
         {
             theQueue = new ItemsQueue(capacity, name, UnitySimClock.Instance.clock);
+            if (Experimenter.HeadlessActive)
+            {
+                theQueue.vElement = new NullVElement();
+            }
+            else
+            {
+                theQueue.vElement = this;
+            }
 
-            theQueue.vElement = this;
         }
         override public void StartSim()
         {
