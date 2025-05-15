@@ -20,7 +20,14 @@ namespace UnitySimuLean
         override public void InitializeSim()
         {
             theSource = new InfiniteSource(name, UnitySimClock.Instance.clock);
-            theSource.vElement = this;
+            if (Experimenter.HeadlessActive)
+            {
+                theSource.vElement = new NullVElement();
+            }
+            else
+            {
+                theSource.vElement = this;
+            }
 
         }
         override public void StartSim()
