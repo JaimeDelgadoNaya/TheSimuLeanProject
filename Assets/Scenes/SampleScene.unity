@@ -756,8 +756,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   simEvents: {fileID: 11400000, guid: 7b88f3881f55a8f4983a441903f47b6a, type: 2}
   ExperimenterOn: 1
-  experimenter: {fileID: 0}
-  maxTime: 1000
+  experimenter: {fileID: 1123213217}
+  maxTime: 25600
 --- !u!4 &1123213215
 Transform:
   m_ObjectHideFlags: 0
@@ -786,23 +786,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxTime: 100
   timeScale: 100
-  headlessMode: 0
+  headlessMode: 1
   iElements:
   - {fileID: 119064424}
   - {fileID: 57438269}
   iParameters:
   - Capacity
+  - Capacity
   scenarios:
   - myList:
-    - 5
-  - myList:
-    - 10
+    - 1
+    - 1
   oElements:
-  - {fileID: 119064424}
   - {fileID: 418561262}
   Variables:
-  - Content
-  - Input
+  - 1000
 --- !u!1001 &1240607689
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -899,15 +897,10 @@ MonoBehaviour:
   myInputs:
   - {fileID: 57438269}
   requirements: 01000000
-  initialBatchQuantity: 01000000
+  initialBatchQuantity: 02000000
   batchMode: 0
-  updateRequirements: 0
-  updateLabels:
-  - 
-  - 
-  - 
-  - 
-  - 
+  updateRequirements: 1
+  updateLabels: []
   combinedItemPrefab: {fileID: 317533965}
   itemPosition: {fileID: 829416443}
   outItemPosition: {fileID: 1795591792}

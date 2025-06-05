@@ -75,8 +75,8 @@ namespace SimuLean
                 inspeccionesRealizadas++;
             }
 
-            // Contar retraso si tiempoActual > Deadline
-            var labelDeadlineObj = theItem.GetLabelValue("Deadline");
+            // Contar retraso si tiempoActual > Deadline/DueDate
+            var labelDeadlineObj = theItem.GetLabelValue("Deadline") ?? theItem.GetLabelValue("DueDate");
             if (labelDeadlineObj != null)
             {
                 double tDeadline = labelDeadlineObj.Value;
