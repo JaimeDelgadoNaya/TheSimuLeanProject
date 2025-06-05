@@ -1,4 +1,4 @@
-using SimuLean;
+Ôªøusing SimuLean;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,22 +10,22 @@ namespace UnitySimuLean
     /// </summary>
     public class UnityCombiner : SElement, VElement
     {
-        // ConfiguraciÛn del Combiner:
+        // Configuraci√≥n del Combiner:
         public SElement[] myInputs;
         public int[] requirements = { 2};
         public int[] initialBatchQuantity = { 2 };      // Lista de requerimientos (capacidad) de cada entrada.
         
-        public bool batchMode = false;                      // Modo batch: si true, agrega componentes al Ìtem padre; de lo contrario, crea un nuevo Ìtem compuesto.
-        public bool updateRequirements = false;             // Si se deben actualizar din·micamente los requerimientos.
+        public bool batchMode = false;                      // Modo batch: si true, agrega componentes al √≠tem padre; de lo contrario, crea un nuevo √≠tem compuesto.
+        public bool updateRequirements = false;             // Si se deben actualizar din√°micamente los requerimientos.
         public string[] updateLabels;                       // Etiquetas para actualizar requerimientos (opcional).
 
-        // Prefab y posiciones para el Ìtem combinado:
+        // Prefab y posiciones para el √≠tem combinado:
         public GameObject combinedItemPrefab;
         public Transform itemPosition;
         public Transform outItemPosition;
         public float separation = 0f;
 
-        // Par·metros adicionales:
+        // Par√°metros adicionales:
         public double meanDelay = 5.0;                      // Retardo medio (para la estrategia de retardo constante).
         public int capacity;                  // Capacidad (para crear la lista de procesos).
         public string elementName = "Combiner";     // Nombre del elemento.
@@ -39,14 +39,14 @@ namespace UnitySimuLean
         public enum VisualMode
         {
             //Stacked,   // Los items se apilan uno encima del otro. (No utilizar no funciona)
-            MainOnly,  // Se muestra solo el item principal y se destruyen los dem·s.
+            MainOnly,  // Se muestra solo el item principal y se destruyen los dem√°s.
             NewItem    // Se crea un item nuevo y se eliminan los items originales.
         }
 
 
         void Start()
         {
-            // Se aÒade este componente al reloj de simulaciÛn.
+            // Se a√±ade este componente al reloj de simulaci√≥n.
             UnitySimClock.Instance.Elements.Add(this);
         }
 
@@ -102,7 +102,7 @@ namespace UnitySimuLean
             List<string> labels = updateLabels != null ? new List<string>(updateLabels) : new List<string>();
 
             // Crear la instancia del Combiner con la firma actualizada:
-            // Par·metros: (requerimientos, estrategia de retardo, nombre, reloj,
+            // Par√°metros: (requerimientos, estrategia de retardo, nombre, reloj,
             //             modo batch, estrategia de pull, updateRequirements, etiquetas, capacity)
             theCombiner = new Combiner(reqList, delayProcess, elementName, UnitySimClock.Instance.clock,
                                         batchMode, null, updateRequirements, labels, capacity);
@@ -115,14 +115,14 @@ namespace UnitySimuLean
             }
             else
             {
-                //AsignaciÛn normal para modo grafico
+                //Asignaci√≥n normal para modo grafico
                 theCombiner.vElement = this;
             }
             Debug.Log($"{this.name}: vElement asignado ({(Experimenter.HeadlessActive ? "NullVElement" : "UnityVElement")}).");
             
             
 
-            // Calcular vector de desplazamiento si outItemPosition est· asignado.
+            // Calcular vector de desplazamiento si outItemPosition est√° asignado.
             if (outItemPosition != null)
             {
                 odVector = outItemPosition.position - itemPosition.position;
@@ -130,7 +130,7 @@ namespace UnitySimuLean
             }
             else
             {
-                Debug.LogWarning($"{this.name}: outItemPosition es null, no se calcular· odVector.");
+                Debug.LogWarning($"{this.name}: outItemPosition es null, no se calcular√° odVector.");
             }
 
             Debug.Log($"[InitializeSim] {this.name}: Finalizado InitializeSim() con elementName {elementName}.");
@@ -146,14 +146,14 @@ namespace UnitySimuLean
 
         void VElement.ReportState(string msg)
         {
-            // Obtenemos la cola de Ìtems y la convertimos a lista.
+            // Obtenemos la cola de √≠tems y la convertimos a lista.
             Queue<Item> itemsQueue = theCombiner.GetItems();
             List<Item> itemsList = new List<Item>(itemsQueue);
 
             if (visualMode == VisualMode.NewItem || visualMode == VisualMode.MainOnly)
             {
-                // En modo NewItem la creaciÛn y envÌo se gestiona en CompleteServerProcess.
-                // Se limpia la cola para evitar reprocesar el Ìtem principal.
+                // En modo NewItem la creaci√≥n y env√≠o se gestiona en CompleteServerProcess.
+                // Se limpia la cola para evitar reprocesar el √≠tem principal.
                 itemsQueue.Clear();
             }
             /*
@@ -164,13 +164,13 @@ namespace UnitySimuLean
 
                 if (itemsList.Count > 0)
                 {
-                    // 1. El primer Ìtem es el principal.
+                    // 1. El primer √≠tem es el principal.
                     if (itemsList[0].vItem is GameObject mainGo)
                     {
                         stackItems.Add(mainGo);
                     }
-                    // 2. Si el Ìtem principal tiene subÌtems (por ejemplo, items de inputs en batchMode),
-                    // se aÒaden al listado.
+                    // 2. Si el √≠tem principal tiene sub√≠tems (por ejemplo, items de inputs en batchMode),
+                    // se a√±aden al listado.
                     if (itemsList[0].GetSubItems() != null)
                     {
                         foreach (Item sub in itemsList[0].GetSubItems())
@@ -181,7 +181,7 @@ namespace UnitySimuLean
                             }
                         }
                     }
-                    // 3. Si por alguna razÛn hay m·s Ìtems en la cola (adem·s del principal), se agregan.
+                    // 3. Si por alguna raz√≥n hay m√°s √≠tems en la cola (adem√°s del principal), se agregan.
                     for (int i = 1; i < itemsList.Count; i++)
                     {
                         if (itemsList[i].vItem is GameObject go)
@@ -198,7 +198,7 @@ namespace UnitySimuLean
                     if (go != null)
                     {
                         go.SetActive(true);
-                        // PosiciÛn base para el principal y offset vertical para cada siguiente.
+                        // Posici√≥n base para el principal y offset vertical para cada siguiente.
                         go.transform.position = itemPosition.position + new Vector3(0f, separation * i, 0f);
                     }
                 }
@@ -212,7 +212,7 @@ namespace UnitySimuLean
             return theCombiner;
         }
 
-        // ImplementaciÛn de VElement:
+        // Implementaci√≥n de VElement:
 
         object VElement.GenerateItem(int myId)
         {
@@ -226,14 +226,14 @@ namespace UnitySimuLean
         }
 
         /// <summary>
-        /// Carga el Ìtem principal en la posiciÛn base. Si batchMode = true, 
-        /// tambiÈn procesa sus sub-Ìtems para mostrarlos visualmente.
+        /// Carga el √≠tem principal en la posici√≥n base. Si batchMode = true, 
+        /// tambi√©n procesa sus sub-√≠tems para mostrarlos visualmente.
         /// </summary>
         void VElement.LoadItem(Item vItem)
         {
             if (visualMode == VisualMode.NewItem || visualMode == VisualMode.MainOnly)
             {
-                // En modo NewItem, no se carga el Ìtem principal, se destruye su representaciÛn.
+                // En modo NewItem, no se carga el √≠tem principal, se destruye su representaci√≥n.
                 if (vItem.vItem is GameObject tempGItem)
                 {
                     Destroy(tempGItem);
@@ -242,7 +242,7 @@ namespace UnitySimuLean
                 return;
             }
 
-            // LÛgica original para otros modos:
+            // L√≥gica original para otros modos:
             GameObject gItem = vItem.vItem as GameObject;
             if (gItem != null)
             {
@@ -274,7 +274,7 @@ namespace UnitySimuLean
 
 
         /// <summary>
-        /// Descarga el Ìtem principal y, en modo batch, tambiÈn destruye los sub-Ìtems.
+        /// Descarga el √≠tem principal y, en modo batch, tambi√©n destruye los sub-√≠tems.
         /// </summary>
         void VElement.UnloadItem(Item vItem)
         {

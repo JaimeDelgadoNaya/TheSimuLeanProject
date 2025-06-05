@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 namespace SimuLean
@@ -91,17 +92,25 @@ namespace SimuLean
         /// </summary>
         public void SetLabelValue(string label, string value)
         {
-            if (double.TryParse(value, out double dValue))
+            if (string.IsNullOrEmpty(label) || string.IsNullOrEmpty(value))
+                return;
+
+            // Se intentan interpretar tanto separadores con punto como con coma.
+            string cleanedValue = value.Replace(',', '.');
+            double parsed;
+
+            if (double.TryParse(cleanedValue,
+                                System.Globalization.NumberStyles.Float,
+                                System.Globalization.CultureInfo.InvariantCulture,
+                                out parsed))
             {
                 if (attribDouble == null)
                     attribDouble = new Dictionary<string, double>();
-                attribDouble[label] = dValue;
+                attribDouble[label] = parsed;
             }
             else
             {
-                // Si no es numérico, puedes decidir almacenarlo de otra forma,
-                // o lanzar una excepción, o simplemente ignorarlo.
-                // Aquí simplemente lo ignoramos.
+                // Si no es numérico, puedes decidir almacenarlo de otra forma o ignorarlo..
             }
         }
         public int? GetBatchRequirement()

@@ -1,17 +1,25 @@
 ﻿using System;
-using System.Linq;
 using UnityEngine;
 
 namespace SimuLean
 {
     /// <summary>
-    /// Models a basic sink that destroys arriving items.
+    /// Models a sink that counts arriving assemblies, inspecciones y retrasos,
+    /// y muestra el tiempo de simulación en cada recepción.
     /// </summary>
     public class Sink : Element
     {
         int numberIterms;
+        int inspeccionesRealizadas;
+        int retrasados;
 
-        public Sink(String name, SimClock state) : base(name, state)
+        // Cuántos ítems de ensamblaje esperamos recibir (normalmente, número de chapas).
+        public int expectedItems = 0;
+
+        // Tiempo de simulación en el que inicia la simulación (normalmente 0).
+        private double startTime;
+
+        public Sink(string name, SimClock state) : base(name, state)
         {
         }
 
@@ -20,33 +28,78 @@ namespace SimuLean
             return numberIterms;
         }
 
+        public int GetInspecciones()
+        {
+            return inspeccionesRealizadas;
+        }
+
+        public int GetRetrasados()
+        {
+            return retrasados;
+        }
+
         public override void Start()
         {
             numberIterms = 0;
-            Debug.Log($"[Sink] Start(): Inicializando Sink. Contador reiniciado a {numberIterms}.");
+            inspeccionesRealizadas = 0;
+            retrasados = 0;
+            // Guardamos el tiempo inicial (normalmente 0 al arrancar).
+            startTime = simClock.GetSimulationTime();
+            Debug.Log($"[Sink] Start(): Inicializando. startTime = {startTime:F2} s.");
         }
 
         public override bool Unblock()
         {
-            throw new System.InvalidOperationException("The Sink cannot receive notifications."); //To change body of generated methods, choose Tools | Templates.
+            throw new InvalidOperationException("The Sink cannot receive notifications.");
         }
 
-        override public int GetQueueLength()
+        public override int GetQueueLength()
         {
             return 0;
         }
-        override public int GetFreeCapacity()
+
+        public override int GetFreeCapacity()
         {
             return -1;
         }
 
         public override bool Receive(Item theItem)
         {
-            Debug.Log($"[Sink] Receive(): Se ha recibido el ítem {theItem.GetId()}. Eliminando el elemento.");
-            vElement.LoadItem(theItem);
+            double tiempoActual = simClock.GetSimulationTime();
             numberIterms++;
 
-            Debug.Log($"[Sink] Receive(): Ítems procesados hasta el momento: {numberIterms}.");
+            // Contar inspección si la etiqueta inspeccionOn == 1
+            var labelInspObj = theItem.GetLabelValue("inspeccionOn");
+            if (labelInspObj != null && labelInspObj.Value == 1)
+            {
+                inspeccionesRealizadas++;
+            }
+
+            // Contar retraso si tiempoActual > Deadline
+            var labelDeadlineObj = theItem.GetLabelValue("Deadline");
+            if (labelDeadlineObj != null)
+            {
+                double tDeadline = labelDeadlineObj.Value;
+                if (tiempoActual > tDeadline)
+                {
+                    retrasados++;
+                }
+            }
+
+            vElement.LoadItem(theItem);
+
+            // Mostrar contador con tiempo actual de simulación
+            Debug.Log($"[Sink] Receive() t={tiempoActual:F2} s: Ítem {theItem.GetId()} procesado. " +
+                      $"Total={numberIterms}, Inspecciones={inspeccionesRealizadas}, Retrasados={retrasados}.");
+
+            // Si ya recibimos todos los ítems esperados, calculamos tiempo total
+            if (expectedItems > 0 && numberIterms == expectedItems)
+            {
+                double totalTime = tiempoActual - startTime;
+                Debug.Log($"[Sink] Todos los ítems esperados ({expectedItems}) han llegado.");
+                Debug.Log($"[Sink] Tiempo total de simulación: {totalTime:F2} s (desde {startTime:F2} hasta {tiempoActual:F2}).");
+            }
+
             return true;
         }
 

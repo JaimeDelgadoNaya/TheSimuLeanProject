@@ -147,7 +147,7 @@ MonoBehaviour:
   separation: 1
   itemPosition: {fileID: 0}
   myName: Jaime
-  fileName: DatosPrevia.xlsx
+  fileName: Llegada_Refuerzos.xlsx
 --- !u!114 &56170550 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1110163347489440305, guid: 78b7130742c1fe94aa9b5a3df80e5db8, type: 3}
@@ -282,7 +282,7 @@ MonoBehaviour:
   separation: 1
   itemPosition: {fileID: 0}
   myName: Jaime
-  fileName: model_scheduleSource.xlsx
+  fileName: Llegada_Chapas.xlsx
 --- !u!114 &418561262 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9027891127040377300, guid: 5cc7ebb92f23ac74e9c1a592e3759f8f, type: 3}
@@ -303,7 +303,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1110163347489440305, guid: 78b7130742c1fe94aa9b5a3df80e5db8, type: 3}
       propertyPath: capacity
-      value: 20
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 1110163347489440305, guid: 78b7130742c1fe94aa9b5a3df80e5db8, type: 3}
       propertyPath: separation
@@ -786,7 +786,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxTime: 100
   timeScale: 100
-  headlessMode: 1
+  headlessMode: 0
   iElements:
   - {fileID: 119064424}
   - {fileID: 57438269}
@@ -902,16 +902,21 @@ MonoBehaviour:
   initialBatchQuantity: 01000000
   batchMode: 0
   updateRequirements: 0
-  updateLabels: []
+  updateLabels:
+  - 
+  - 
+  - 
+  - 
+  - 
   combinedItemPrefab: {fileID: 317533965}
   itemPosition: {fileID: 829416443}
   outItemPosition: {fileID: 1795591792}
   separation: 0
   meanDelay: 5
-  capacity: 10
+  capacity: 1
   elementName: Combiner
   serverAnimator: {fileID: 0}
-  visualMode: 1
+  visualMode: 0
 --- !u!4 &1795591792 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6813174213412063831, guid: 836ec2a0caf0e4743bdae04a7cf0a43c, type: 3}

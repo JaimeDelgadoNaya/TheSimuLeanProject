@@ -170,6 +170,7 @@ namespace SimuLean
                 theProcess.SetItem(theItem);
                 pullMode.UpdateStrategy(theItem);
                 UpdateRequirements(theItem);
+                ApplyItemLabels(theItem);
 
                 for (int i = 0; i < GetInputsCount(); i++)
                 {
@@ -200,6 +201,18 @@ namespace SimuLean
             bool ready = true;
             for (int i = 0; i < inputs.Length; i++)
             {
+                if (i == 0)
+                {
+                    // La entrada 0 corresponde al ítem principal, que se guarda
+                    // directamente en 'theProcess' y no encola en inputs[0].
+                    if (theProcess.GetItem() == null)
+                    {
+                        ready = false;
+                        break;
+                    }
+                    continue;
+                }
+
                 if (inputs[i].GetQueueLength() < requirements[i])
                 {
                     ready = false;
@@ -212,6 +225,9 @@ namespace SimuLean
                 // Libera ítems de cada entrada
                 for (int i = 0; i < inputs.Length; i++)
                 {
+                    if (i == 0)
+                        continue; // El ítem principal ya está en theProcess
+
                     var items = inputs[i].Release(requirements[i]);
                     foreach (var item in items)
                     {
@@ -223,11 +239,49 @@ namespace SimuLean
                     }
                 }
                 theProcess.SetState(State.BUSY);
-                double delayTime = theProcess.GetDelay();
-                simClock.ScheduleEvent(theProcess, delayTime);
+                double processingTime = GetProcessTime(theProcess.GetItem());
+                theProcess.loadTime = simClock.GetSimulationTime();
+                theProcess.lastDelay = processingTime;
+                simClock.ScheduleEvent(theProcess, processingTime);
                 return true;
             }
             return false;
+        }
+
+        // Calcula el tiempo de proceso para el ítem principal usando sus labels.
+        private double GetProcessTime(Item mainItem)
+        {
+            if (mainItem == null)
+                return delayStrategy.NextValue();
+
+            double soldadura = mainItem.GetLabelValue("tSoldadura") ?? delayStrategy.NextValue();
+            double inspeccionOn = mainItem.GetLabelValue("inspeccionOn") ?? 0;
+            double inspeccion = 0;
+            if (inspeccionOn >= 1)
+            {
+                inspeccion = mainItem.GetLabelValue("tInspeccion") ?? 0;
+            }
+            double totalDelay = soldadura + inspeccion;
+
+            Debug.Log($"{GetName()}: tSoldadura={soldadura}, tInspeccion={inspeccion}, totalDelay={totalDelay}");
+
+            return totalDelay;
+        }
+
+        // Aplica labels al recibir el ítem principal (por ejemplo, actualizar requerimientos).
+        private void ApplyItemLabels(Item mainItem)
+        {
+            if (mainItem == null)
+                return;
+
+            double? nRefs = mainItem.GetLabelValue("nRefuerzos");
+            if (nRefs != null && inputs.Length > 1)
+            {
+                int newReq = (int)nRefs.Value;
+                requirements[1] = newReq;
+                inputs[1].SetCapacity(newReq);
+                Debug.Log($"{GetName()}: nRefuerzos={newReq}");
+            }
         }
 
         // Crea un nuevo ítem usando el tiempo actual del reloj de simulación.
