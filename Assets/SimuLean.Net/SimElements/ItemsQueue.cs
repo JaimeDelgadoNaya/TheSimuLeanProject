@@ -40,10 +40,16 @@ namespace SimuLean
             if (itemsQ.Count > 0)
             {
                 Item theItem = itemsQ.Dequeue();
+
+                if (!GetOutput().SendItem(theItem, this))
+                {
+                    itemsQ.Enqueue(theItem);
+                    return false;
+                }
+
                 currentItems--;
                 vElement.ReportState("Exit");
 
-                GetOutput().SendItem(theItem, this);
 
                 GetInput().NotifyAvaliable(this);
                 return true;

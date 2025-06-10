@@ -143,12 +143,10 @@ namespace SimuLean
         public override bool CheckAvaliability(Item theItem)
         {
             bool capacityOk = true;
-            bool valid = true;
+            bool valid = inputStrategy?.IsValid(theItem) ?? true;
 
-            // Forzamos mainReceiving a true para aceptar ítems sin depender del estado del Combiner:
-            //Javi: Si fuerzas claro que no va a funcionar
-
-            bool mainReceiving = arrivalListener.IsMainReceiving(this.inputId); // hay programarlo
+            // Consultamos al ArrivalListener si esta entrada puede enviar un ítem.
+            bool mainReceiving = arrivalListener.IsMainReceiving(this.inputId);
             return capacityOk && valid && mainReceiving;
         }
 

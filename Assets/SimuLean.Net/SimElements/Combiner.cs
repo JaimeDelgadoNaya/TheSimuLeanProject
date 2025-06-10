@@ -87,11 +87,24 @@ namespace SimuLean
             }
         }
 
-        // Verifica si el proceso principal está en estado RECEIVING.
+        // Indica si la entrada especificada puede enviar un ítem al combiner.
+        // La entrada principal (0) puede hacerlo cuando el proceso está IDLE o
+        // ya se encuentra recibiendo. El resto de entradas solo cuando el
+        // proceso está en estado RECEIVING.
 
         public bool IsMainReceiving(int inputId)
         {
-            return theProcess != null && (theProcess.GetState() == State.RECEIVING);
+            if (theProcess == null)
+                return false;
+
+            var state = theProcess.GetState();
+
+            if (inputId == 0)
+            {
+                return state == State.IDLE || state == State.RECEIVING;
+            }
+
+            return state == State.RECEIVING;
         }
 
         // Retorna la entrada (CombinerInput) correspondiente al índice dado.

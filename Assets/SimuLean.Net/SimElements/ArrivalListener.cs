@@ -14,7 +14,12 @@
         
         VElement GetVElement();
 
-        // Falta este método
+        /// <summary>
+        /// Informa si la entrada indicada puede entregar su ítem al elemento
+        /// principal.
+        /// </summary>
+        /// <param name="inputId">Identificador de la entrada.</param>
+        /// <returns>True si la entrada puede enviar el ítem.</returns>
         bool IsMainReceiving(int inputId);
     }
 }
