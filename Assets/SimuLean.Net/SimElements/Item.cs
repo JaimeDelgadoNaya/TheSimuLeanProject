@@ -170,7 +170,23 @@ namespace SimuLean
         {
             return Labels;
         }
+        /// <summary>
+        /// Copies all label data from another item.
+        /// </summary>
+        /// <param name="other">Item from which to copy labels.</param>
+        public void CopyLabelsFrom(Item other)
+        {
+            if (other == null || other.attribDouble == null)
+                return;
 
+            if (attribDouble == null)
+                attribDouble = new Dictionary<string, double>();
+
+            foreach (var kvp in other.attribDouble)
+            {
+                attribDouble[kvp.Key] = kvp.Value;
+            }
+        }
     }
 }
 

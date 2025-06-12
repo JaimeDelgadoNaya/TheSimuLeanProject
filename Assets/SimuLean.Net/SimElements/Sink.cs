@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SimuLean
@@ -75,8 +76,23 @@ namespace SimuLean
                 inspeccionesRealizadas++;
             }
 
-            // Contar retraso si tiempoActual > Deadline/DueDate
-            var labelDeadlineObj = theItem.GetLabelValue("Deadline") ?? theItem.GetLabelValue("DueDate");
+            // Contar retraso si tiempoActual > Deadline/DueDate (ignorando mayúsculas)
+            double? labelDeadlineObj = theItem.GetLabelValue("Deadline") ?? theItem.GetLabelValue("DueDate");
+            if (labelDeadlineObj == null)
+            {
+                foreach (KeyValuePair<string, object> kvp in theItem.GetAllLabels())
+                {
+                    if (kvp.Key.Equals("Deadline", StringComparison.OrdinalIgnoreCase) ||
+                        kvp.Key.Equals("DueDate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (kvp.Value is double d)
+                        {
+                            labelDeadlineObj = d;
+                            break;
+                        }
+                    }
+                }
+            }
             if (labelDeadlineObj != null)
             {
                 double tDeadline = labelDeadlineObj.Value;

@@ -279,12 +279,18 @@ namespace SimuLean
         }
 
         // Crea un nuevo ítem usando el tiempo actual del reloj de simulación.
-        public Item CreateNewItem()
+        public Item CreateNewItem(Item sourceItem = null)
         {
             Item newItem = new Item(simClock.GetSimulationTime());
             newItem.SetId("type", 1, 1);
 
             newItem.vItem = vElement.GenerateItem(0);
+
+            // Copy labels from the original item if provided
+            if (sourceItem != null)
+            {
+                newItem.CopyLabelsFrom(sourceItem);
+            }
 
             return newItem;
 
