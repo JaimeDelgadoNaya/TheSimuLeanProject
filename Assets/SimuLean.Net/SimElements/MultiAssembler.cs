@@ -42,10 +42,7 @@ namespace SimuLean
             inputs = new ConstrainedInput[requirements.Length];
             for (int i = 0; i < inputs.Length; i++)
             {
-                // allow more than the strict requirement so several items can
-                // queue waiting for a single plate. Use -1 for unlimited
-                // capacity to support variable combinations.
-                inputs[i] = new ConstrainedInput(-1, this, i, this.name + ".Input" + i, simClock);
+                inputs[i] = new ConstrainedInput(requirements[i], this, i, this.name + ".Input" + i, simClock);
             }
         }
 
@@ -157,12 +154,13 @@ namespace SimuLean
             return true;
         }
 
-        void ArrivalListener.ItemReceived(Item theItem, int source)
+        bool ArrivalListener.ItemReceived(Item theItem, int source)
         {
             if (!receivingItems)
             {
                 CheckRequirements();
             }
+            return true;
         }
 
         VElement ArrivalListener.GetVElement()

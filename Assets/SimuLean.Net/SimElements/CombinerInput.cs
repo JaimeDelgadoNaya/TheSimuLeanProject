@@ -1,10 +1,10 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 namespace SimuLean
 {
     /// <summary>
-    /// CombinerInput: Representa la entrada del Combiner, similar a la versión en Python.
+    /// CombinerInput: Representa la entrada del Combiner, similar a la versiï¿½n en Python.
     /// </summary>
     public class CombinerInput : Element
     {
@@ -18,12 +18,12 @@ namespace SimuLean
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="capacity">Capacidad máxima de la entrada.</param>
-        /// <param name="arrivalListener">Objeto ArrivalListener (por ejemplo, el Combiner) que recibirá notificaciones.</param>
+        /// <param name="capacity">Capacidad mï¿½xima de la entrada.</param>
+        /// <param name="arrivalListener">Objeto ArrivalListener (por ejemplo, el Combiner) que recibirï¿½ notificaciones.</param>
         /// <param name="inputId">Identificador de la entrada.</param>
         /// <param name="name">Nombre de la entrada.</param>
-        /// <param name="simClock">Reloj de simulación.</param>
-        /// <param name="inputStrategy">Estrategia para validar los ítems; si es nula se usa DefaultStrategy.</param>
+        /// <param name="simClock">Reloj de simulaciï¿½n.</param>
+        /// <param name="inputStrategy">Estrategia para validar los ï¿½tems; si es nula se usa DefaultStrategy.</param>
         public CombinerInput(int capacity, ArrivalListener arrivalListener, int inputId, string name, SimClock simClock, InputStrategy inputStrategy = null)
             : base(name, simClock)
         {
@@ -38,7 +38,7 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Inicializa la entrada: limpia la cola y reinicia el contador de ítems.
+        /// Inicializa la entrada: limpia la cola y reinicia el contador de ï¿½tems.
         /// </summary>
         public override void Start()
         {
@@ -48,10 +48,10 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Libera hasta 'quantity' ítems de la cola.
+        /// Libera hasta 'quantity' ï¿½tems de la cola.
         /// </summary>
-        /// <param name="quantity">Cantidad de ítems a liberar.</param>
-        /// <returns>Cola con los ítems liberados.</returns>
+        /// <param name="quantity">Cantidad de ï¿½tems a liberar.</param>
+        /// <returns>Cola con los ï¿½tems liberados.</returns>
         public Queue<Item> Release(int quantity)
         {
             Queue<Item> releasedItems = new Queue<Item>();
@@ -63,8 +63,8 @@ namespace SimuLean
                     Item theItem = itemsQueue.Dequeue();
                     releasedItems.Enqueue(theItem);
                     currentItems--;
-                    // GetInput().NotifyAvaliable(this); Esto no está
-                    Debug.Log($"[CombinerInput] Release(): Ítem liberado. currentItems ahora es {currentItems}.");
+                    // GetInput().NotifyAvaliable(this); Esto no estï¿½
+                    Debug.Log($"[CombinerInput] Release(): ï¿½tem liberado. currentItems ahora es {currentItems}.");
                 }
                 else
                 {
@@ -75,11 +75,11 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Devuelve el número de ítems actualmente en la cola.
+        /// Devuelve el nï¿½mero de ï¿½tems actualmente en la cola.
         /// </summary>
         public override int GetQueueLength()
         {
-            Debug.Log($"[CombinerInput] GetQueueLength(): Entrada {inputId} tiene {currentItems} ítems.");
+            Debug.Log($"[CombinerInput] GetQueueLength(): Entrada {inputId} tiene {currentItems} ï¿½tems.");
             return currentItems;
         }
 
@@ -92,38 +92,35 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Notifica la disponibilidad llamando al método NotifyAvaliable del objeto Link obtenido vía GetInput().
+        /// Notifica la disponibilidad llamando al mï¿½todo NotifyAvaliable del objeto Link obtenido vï¿½a GetInput().
         /// </summary>
         public override bool Unblock()
         {
             Debug.Log($"[CombinerInput] Unblock(): Notificando disponibilidad desde entrada {inputId}.");
-            // Se asume que GetInput() retorna un objeto que implemente la interfaz Link.
-            //if(this.CheckAvaliability(null)) (Javi)
-            //{
-            //    this.Release(itemsQueue.Count);
-            //    return true;
-            //}
 
             this.GetInput().NotifyAvaliable(this);
             return true;
         }
 
         /// <summary>
-        /// Recibe un ítem. Si cumple la disponibilidad, lo encola y notifica al ArrivalListener.
+        /// Recibe un ï¿½tem. Si cumple la disponibilidad, lo encola y notifica al ArrivalListener.
         /// </summary>
         public override bool Receive(Item theItem)
         {
             if (CheckAvaliability(theItem))
             {
-                Debug.Log($"[CombinerInput] Receive(): Aceptando ítem {theItem.GetId()} en entrada {inputId}.");
+                Debug.Log($"[CombinerInput] Receive(): Aceptando ï¿½tem {theItem.GetId()} en entrada {inputId}.");
                 currentItems++;
                 theItem.SetConstrainedInput(this.inputId);
                 itemsQueue.Enqueue(theItem);
                 arrivalListener.GetVElement().LoadItem(theItem);
                 //Estaba mal programado (Javi)
-                arrivalListener.ItemReceived(theItem, inputId); 
-                this.GetInput().NotifyAvaliable(this);
-        
+                if (!this.arrivalListener.ItemReceived(theItem, inputId))
+                {
+                    this.GetInput().NotifyAvaliable(this);
+                }
+
+
                 // Se asume que arrivalListener es un Combiner:
                 //Esto sobra (Javi)
                 //Combiner combiner = arrivalListener as Combiner;
@@ -138,20 +135,20 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Verifica si es posible recibir el ítem.
+        /// Verifica si es posible recibir el ï¿½tem.
         /// </summary>
         public override bool CheckAvaliability(Item theItem)
         {
-            bool capacityOk = true;
+            bool capacityOk = this.currentItems < this.capacity;
             bool valid = inputStrategy?.IsValid(theItem) ?? true;
 
-            // Consultamos al ArrivalListener si esta entrada puede enviar un ítem.
+            // Consultamos al ArrivalListener si esta entrada puede enviar un ï¿½tem.
             bool mainReceiving = arrivalListener.IsMainReceiving(this.inputId);
             return capacityOk && valid && mainReceiving;
         }
 
         /// <summary>
-        /// Devuelve la capacidad máxima de la entrada.
+        /// Devuelve la capacidad mï¿½xima de la entrada.
         /// </summary>
         public int GetCapacity()
         {
@@ -159,7 +156,7 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Actualiza la capacidad máxima de la entrada.
+        /// Actualiza la capacidad mï¿½xima de la entrada.
         /// </summary>
         public void SetCapacity(int newCapacity)
         {
@@ -168,7 +165,7 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Devuelve la cola de ítems de la entrada.
+        /// Devuelve la cola de ï¿½tems de la entrada.
         /// </summary>
         public Queue<Item> GetItems()
         {

@@ -10,7 +10,7 @@
         /// </summary>
         /// <param name="theItem"></param>
         /// <param name="source"></param>
-        void ItemReceived(Item theItem, int source);
+        bool ItemReceived(Item theItem, int source);
         
         VElement GetVElement();
 

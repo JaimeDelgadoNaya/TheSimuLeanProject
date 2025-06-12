@@ -21,15 +21,15 @@ namespace SimuLean
         ServerProcess theProcess;
 
         int[] requirements;
-        DoubleRandomProcess delayStrategy; 
+        DoubleRandomProcess delayStrategy;
         string name;
-        
+
         CombinerInput[] inputs;
         bool batchMode;
         InputStrategy pullMode;
         bool updateRequirementsEnabled;
         List<string> updateLabels;
-        
+
 
         // Constructor
         public Combiner(
@@ -39,10 +39,10 @@ namespace SimuLean
             SimClock simClock,
             bool batchMode = false,
             InputStrategy pullMode = null,
-            bool updateRequirements = false,          
+            bool updateRequirements = false,
             List<string> updateLabels = null,
             int capacity = 1)
-            : base(new DoubleRandomProcess[] { delayStrategy }, name, simClock) 
+            : base(new DoubleRandomProcess[] { delayStrategy }, name, simClock)
         {
             this.requirements = requirements;
             this.delayStrategy = delayStrategy;
@@ -67,16 +67,16 @@ namespace SimuLean
             }
         }
 
-        
+
 
         // Inicia el combiner: crea el proceso principal y arranca cada entrada.
         public override void Start()
         {
-            
+
             idleProccesses.Clear();
             workInProgress.Clear();
             completed.Clear();
-            
+
             theProcess = new ServerProcess(this, delayStrategy, 1);
             theProcess.SetState(State.IDLE);
 
@@ -98,11 +98,6 @@ namespace SimuLean
                 return false;
 
             var state = theProcess.GetState();
-
-            if (inputId == 0)
-            {
-                return state == State.IDLE || state == State.RECEIVING;
-            }
 
             return state == State.RECEIVING;
         }
@@ -214,17 +209,6 @@ namespace SimuLean
             bool ready = true;
             for (int i = 0; i < inputs.Length; i++)
             {
-                if (i == 0)
-                {
-                    // La entrada 0 corresponde al ítem principal, que se guarda
-                    // directamente en 'theProcess' y no encola en inputs[0].
-                    if (theProcess.GetItem() == null)
-                    {
-                        ready = false;
-                        break;
-                    }
-                    continue;
-                }
 
                 if (inputs[i].GetQueueLength() < requirements[i])
                 {
@@ -238,9 +222,6 @@ namespace SimuLean
                 // Libera ítems de cada entrada
                 for (int i = 0; i < inputs.Length; i++)
                 {
-                    if (i == 0)
-                        continue; // El ítem principal ya está en theProcess
-
                     var items = inputs[i].Release(requirements[i]);
                     foreach (var item in items)
                     {
@@ -288,7 +269,6 @@ namespace SimuLean
                 return;
 
             double? nRefs = mainItem.GetLabelValue("nRefuerzos");
-            Debug.Log($"[Combiner] ApplyItemLabels:  nRefuerzos = {nRefs}");
             if (nRefs != null && inputs.Length > 1)
             {
                 int newReq = (int)nRefs.Value;
@@ -394,10 +374,10 @@ namespace SimuLean
         }
 
         // Métodos de ArrivalListener (se pueden ajustar según la interfaz definida)
-        public void ItemReceived(Item theItem, int source)
+        public bool ItemReceived(Item theItem, int source)
         {
-            ComponentReceived(theItem, source);
+            return ComponentReceived(theItem, source);
         }
     }
-    
+
 }
