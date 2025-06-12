@@ -42,7 +42,10 @@ namespace SimuLean
             inputs = new ConstrainedInput[requirements.Length];
             for (int i = 0; i < inputs.Length; i++)
             {
-                inputs[i] = new ConstrainedInput(requirements[i], this, i, this.name + ".Input" + i, simClock);
+                // allow more than the strict requirement so several items can
+                // queue waiting for a single plate. Use -1 for unlimited
+                // capacity to support variable combinations.
+                inputs[i] = new ConstrainedInput(-1, this, i, this.name + ".Input" + i, simClock);
             }
         }
 

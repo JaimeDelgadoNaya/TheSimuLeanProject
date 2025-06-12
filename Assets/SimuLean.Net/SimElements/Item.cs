@@ -87,6 +87,16 @@ namespace SimuLean
         }
 
         /// <summary>
+        /// Returns the textual type previously assigned with <see cref="SetType"/>.
+        /// This is useful for debugging when items are identified by a string
+        /// rather than the numeric id.
+        /// </summary>
+        public string GetTypeName()
+        {
+            return type;
+        }
+
+        /// <summary>
         /// Asigna un atributo extra como un valor double.
         /// Si necesitas trabajar con otros tipos, puedes sobrecargar o convertir según sea necesario.
         /// </summary>

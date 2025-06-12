@@ -288,6 +288,7 @@ namespace SimuLean
                 return;
 
             double? nRefs = mainItem.GetLabelValue("nRefuerzos");
+            Debug.Log($"[Combiner] ApplyItemLabels:  nRefuerzos = {nRefs}");
             if (nRefs != null && inputs.Length > 1)
             {
                 int newReq = (int)nRefs.Value;

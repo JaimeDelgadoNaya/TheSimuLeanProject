@@ -36,6 +36,8 @@ namespace SimuLean
         private Dictionary<string, string> currentRow; // Fila actual de datos (encabezados y valores) mod 
         private IEnumerator<Dictionary<string, string>> rowIterator; // Añadir esta línea para definir rowIterator
         private List<Dictionary<string, string>> preprocessedRows; //Lista para reordenar filas de datos
+        // Contador para asignar IDs únicos a cada ítem creado
+        private int itemCounter = 0;
         //constructor modificado con parametros opcionales Mod
 
         public ScheduleSource(String name, SimClock state, String fileName = null, Dictionary<string, List<string>> dataDict = null, Item modelItem = null, string sheetName = null) : base(name, state)
@@ -62,10 +64,18 @@ namespace SimuLean
             {
                 this.fileType = null;
             }
-            // Preprocesar las filas y ordenarlas por prioridad
+            // Preprocess rows and sort them first by Time and then by Priority
             preprocessedRows = GetRowIterator().ToList();
             preprocessedRows.Sort((row1, row2) =>
             {
+                double time1 = row1.ContainsKey("Time") && double.TryParse(row1["Time"], out double t1) ? t1 : simClock.GetSimulationTime();
+                double time2 = row2.ContainsKey("Time") && double.TryParse(row2["Time"], out double t2) ? t2 : simClock.GetSimulationTime();
+                int cmp = time1.CompareTo(time2);
+                if (cmp != 0)
+                {
+                    return cmp;
+                }
+
                 int priority1 = row1.ContainsKey("Priority") && int.TryParse(row1["Priority"], out int p1) ? p1 : int.MaxValue;
                 int priority2 = row2.ContainsKey("Priority") && int.TryParse(row2["Priority"], out int p2) ? p2 : int.MaxValue;
                 return priority1.CompareTo(priority2);
@@ -197,11 +207,47 @@ namespace SimuLean
             }
         }
 
+        /// <summary>
+        /// Obtiene la prioridad almacenada en la fila, ignorando mayúsculas.
+        /// Si no se encuentra o no es numérica, devuelve int.MaxValue.
+        /// </summary>
+        /// <summary>
+        /// Obtiene la prioridad almacenada en la fila, ignorando mayúsculas.
+        /// Si no se encuentra o no es numérica, devuelve int.MaxValue.
+        /// </summary>
+        private int GetRowPriority(Dictionary<string, string> row)
+        {
+            if (row == null)
+                return int.MaxValue;
 
+            string key = row.Keys.FirstOrDefault(k => k.Equals("Priority", StringComparison.OrdinalIgnoreCase));
+            if (key != null && int.TryParse(row[key], out int parsed))
+                return parsed;
+
+            return int.MaxValue;
+        }
+
+        /// <summary>
+        /// Devuelve el valor de una etiqueta ignorando mayúsculas.
+        /// </summary>
+        private double? GetItemLabelValueIgnoreCase(Item item, string label)
+        {
+            if (item == null || string.IsNullOrEmpty(label))
+                return null;
+
+            var all = item.GetAllLabels();
+            foreach (var kvp in all)
+            {
+                if (kvp.Key.Equals(label, StringComparison.OrdinalIgnoreCase) && kvp.Value is double d)
+                    return d;
+            }
+            return null;
+        }
 
         public override void Start()
         {
             numberIterms = 0;
+            itemCounter = 0;
             ScheduleNext();
         }
 
@@ -257,7 +303,7 @@ namespace SimuLean
             Item newItem = CreateItem();
             while (newItem != null)
             {
-                Debug.Log("Denisa Procesando ítem (ID: " + newItem.GetId() + ", Prioridad: " + newItem.priority + ").");
+                Debug.Log("Procesando ítem (ID: " + newItem.GetId() + ", Prioridad: " + newItem.priority + ").");
                 // Intenta enviar el ítem; si no se puede, se añade a la cola de ítems bloqueados
                 if (!this.GetOutput().SendItem(newItem, this))
                 {
@@ -285,30 +331,36 @@ namespace SimuLean
 
             // Decrementa la cantidad pendiente
             currentPendingQ--;
+            int priority = 0; // se obtendrá tras aplicar las etiquetas
 
             // Crea el ítem usando el tiempo actual de la simulación
             Item newItem = new Item(simClock.GetSimulationTime());
 
-            // Asigna el tipo o nombre del ítem
-            newItem.SetType(currentItemName);  // Asegúrate de que el método SetType exista en Item
-            Debug.Log("Ítem creado de tipo: " + currentItemName);
-            // Asigna atributos adicionales
+            
+            // Asigna atributos adicionales primero
             // Itera sobre cada clave en currentRow, omitiendo las básicas ("Time", "Name", "Q")
             foreach (var kvp in currentRow)
             {
-                if (kvp.Key == "Time" || kvp.Key == "Name" || kvp.Key == "Q" || kvp.Key == "Priority")
+                if (kvp.Key == "Time" || kvp.Key == "Name" || kvp.Key == "Q")
                     continue;
 
-                // Asumiendo que Item tiene un método SetLabelValue para asignar atributos
+                
                 newItem.SetLabelValue(kvp.Key, kvp.Value);
                 Debug.Log("Atributo asignado: " + kvp.Key + " = " + kvp.Value);
             }
-            // Asigna la prioridad si está presente
-            if (currentRow.ContainsKey("Priority") && int.TryParse(currentRow["Priority"], out int priority))
-            {
-                newItem.priority = priority;
-                Debug.Log("Prioridad asignada: " + priority);
-            }
+            
+
+            // Obtiene la prioridad a partir de la etiqueta, ignorando mayúsculas
+            double? prioVal = GetItemLabelValueIgnoreCase(newItem, "Priority");
+            if (prioVal != null)
+                priority = (int)prioVal.Value;
+
+            // Asigna tipo, id y prioridad
+            itemCounter++;
+            newItem.SetId(currentItemName, itemCounter, priority);
+            Debug.Log($"Ítem creado de tipo: {currentItemName} con ID: {itemCounter}");
+            // La prioridad ya fue asignada mediante SetId
+            Debug.Log("Prioridad asignada: " + priority);
             newItem.vItem = vElement.GenerateItem(newItem.GetId());
             Debug.Log("vItem asignado al ítem.");
 
@@ -328,6 +380,8 @@ namespace SimuLean
             // Inicializa el iterador la primera vez.
             if (rowIterator == null)
             {
+                rowIterator = GetRowIterator().GetEnumerator();
+                // Use the preprocessed and ordered rows
                 rowIterator = GetRowIterator().GetEnumerator();
                 Debug.Log("Row iterator inicializado.");
             }

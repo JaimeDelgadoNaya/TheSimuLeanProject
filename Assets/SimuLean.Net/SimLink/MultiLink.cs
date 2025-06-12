@@ -85,16 +85,20 @@ namespace SimuLean
 
         bool Link.NotifyAvaliable(Element source)
         {
-            foreach (Element orig in blockedTransfers)
+            // Iterate safely over blocked transfers by processing a copy and
+            // re-adding elements that remain blocked. Modifying the list while
+            // iterating caused runtime issues.
+            for (int i = blockedTransfers.Count - 1; i >= 0; i--)
             {
-                blockedTransfers.Remove(orig);
-                if (orig.Unblock())
+                Element orig = blockedTransfers[i];
+                blockedTransfers.RemoveAt(i);
+                if (!orig.Unblock())
                 {
-                    return true;
+                    blockedTransfers.Add(orig);
                 }
                 else
                 {
-                    blockedTransfers.Add(orig);
+                    return true;
                 }
             }
             foreach (Element input in origins)

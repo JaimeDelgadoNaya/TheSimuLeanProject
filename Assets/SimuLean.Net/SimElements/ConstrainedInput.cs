@@ -84,6 +84,13 @@ namespace SimuLean
         public override bool CheckAvaliability(Item theItem)
         {
             return !(currentItems >= capacity || capacity < 0);
+            // Negative capacity means unlimited, always available
+            if (capacity < 0)
+            {
+                return true;
+            }
+
+            return currentItems < capacity;
         }
 
         public int GetCapacity()
