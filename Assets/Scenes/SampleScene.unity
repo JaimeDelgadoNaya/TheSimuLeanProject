@@ -784,8 +784,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e5b4fd4093ce144e8aadd3686e8b2ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxTime: 100
-  timeScale: 100
+  maxTime: 1000000
+  timeScale: 1000000
   headlessMode: 1
   iElements:
   - {fileID: 119064424}
@@ -795,12 +795,12 @@ MonoBehaviour:
   - Capacity
   scenarios:
   - myList:
-    - 1
-    - 1
+    - 1000
+    - 1000
   oElements:
   - {fileID: 418561262}
   Variables:
-  - 1000
+  - Input
 --- !u!1001 &1240607689
 PrefabInstance:
   m_ObjectHideFlags: 0

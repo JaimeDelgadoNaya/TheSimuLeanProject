@@ -55,13 +55,16 @@ namespace UnitySimuLean
 
         private void Start()
         {
-            // 3) Nombre de fichero único por fecha
-            var dateStamp = DateTime.Now.ToString("yyyyMMdd");
-            fileWriter = new FileWriterCSV($"OutData-{dateStamp}");
         }
 
         private void StartExperiment()
         {
+
+            // 3) Nombre de fichero único por fecha
+            var dateStamp = DateTime.Now.ToString("yyyyMMdd");
+            fileWriter = new FileWriterCSV($"OutData-{dateStamp}");
+
+
             // 4) Actualizamos de nuevo (por si cambió en Play)
             HeadlessActive = headlessMode;
 
