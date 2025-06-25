@@ -147,7 +147,7 @@ MonoBehaviour:
   separation: 1
   itemPosition: {fileID: 0}
   myName: Jaime
-  fileName: Llegada_Refuerzos.xlsx
+  fileName: refuerzos_10000.xlsx
 --- !u!114 &56170550 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1110163347489440305, guid: 78b7130742c1fe94aa9b5a3df80e5db8, type: 3}
@@ -282,7 +282,7 @@ MonoBehaviour:
   separation: 1
   itemPosition: {fileID: 0}
   myName: Jaime
-  fileName: Llegada_Chapas.xlsx
+  fileName: previas_10000.xlsx
 --- !u!114 &418561262 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9027891127040377300, guid: 5cc7ebb92f23ac74e9c1a592e3759f8f, type: 3}
@@ -757,7 +757,7 @@ MonoBehaviour:
   simEvents: {fileID: 11400000, guid: 7b88f3881f55a8f4983a441903f47b6a, type: 2}
   ExperimenterOn: 1
   experimenter: {fileID: 1123213217}
-  maxTime: 25600
+  maxTime: 300000000
 --- !u!4 &1123213215
 Transform:
   m_ObjectHideFlags: 0
@@ -784,9 +784,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e5b4fd4093ce144e8aadd3686e8b2ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxTime: 1000000
-  timeScale: 1000000
-  headlessMode: 1
+  maxTime: 10000000
+  timeScale: 10000000
+  headlessMode: 0
   iElements:
   - {fileID: 119064424}
   - {fileID: 57438269}
@@ -795,8 +795,8 @@ MonoBehaviour:
   - Capacity
   scenarios:
   - myList:
-    - 1000
-    - 1000
+    - 100000
+    - 100000
   oElements:
   - {fileID: 418561262}
   Variables:
@@ -900,12 +900,13 @@ MonoBehaviour:
   initialBatchQuantity: 02000000
   batchMode: 0
   updateRequirements: 1
-  updateLabels: []
+  updateLabels:
+  - nRefuerzos
   combinedItemPrefab: {fileID: 317533965}
   itemPosition: {fileID: 829416443}
   outItemPosition: {fileID: 1795591792}
   separation: 0
-  meanDelay: 5
+  meanDelay: 0
   capacity: 1
   elementName: Combiner
   serverAnimator: {fileID: 0}
@@ -1095,7 +1096,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4237847094431365153, guid: 836ec2a0caf0e4743bdae04a7cf0a43c, type: 3}
       propertyPath: cTime
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4237847094431365153, guid: 836ec2a0caf0e4743bdae04a7cf0a43c, type: 3}
       propertyPath: nextElement
