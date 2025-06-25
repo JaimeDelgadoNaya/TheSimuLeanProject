@@ -23,6 +23,12 @@ namespace SimuLean
         TextReader dataFile;
         Queue<Item> itemsInQueue;
 
+        // Global map to associate a reference number with its priority. This
+        // allows multiple ScheduleSources to share priority information so that
+        // reinforcements can inherit the priority from their corresponding
+        // sheet metal entry.
+        private static Dictionary<string, int> priorityByReferencia = new Dictionary<string, int>();
+
         //Nuevas Variables para los parametros opcionales Mod
         private string fileType;
         private Dictionary<string, List<string>> dataDict;
@@ -64,23 +70,44 @@ namespace SimuLean
             {
                 this.fileType = null;
             }
-            // Preprocess rows and sort them first by Time and then by Priority
+            // Preprocess rows and sort them first by Time and then by Priority.
+            // The priority column in the Excel files may be named either
+            // "Priority" or "priorities" (case-insensitive). To ensure we
+            // always respect the provided priorities we use GetRowPriority()
+            // which handles both cases.
+
             preprocessedRows = GetRowIterator().ToList();
             preprocessedRows.Sort((row1, row2) =>
             {
-                double time1 = row1.ContainsKey("Time") && double.TryParse(row1["Time"], out double t1) ? t1 : simClock.GetSimulationTime();
-                double time2 = row2.ContainsKey("Time") && double.TryParse(row2["Time"], out double t2) ? t2 : simClock.GetSimulationTime();
+                double time1 = row1.ContainsKey("Time") && double.TryParse(row1["Time"], out double t1)
+                    ? t1 : simClock.GetSimulationTime();
+                double time2 = row2.ContainsKey("Time") && double.TryParse(row2["Time"], out double t2)
+                    ? t2 : simClock.GetSimulationTime();
                 int cmp = time1.CompareTo(time2);
                 if (cmp != 0)
                 {
                     return cmp;
                 }
 
-                int priority1 = row1.ContainsKey("Priority") && int.TryParse(row1["Priority"], out int p1) ? p1 : int.MaxValue;
-                int priority2 = row2.ContainsKey("Priority") && int.TryParse(row2["Priority"], out int p2) ? p2 : int.MaxValue;
+                int priority1 = GetRowPriority(row1);
+                int priority2 = GetRowPriority(row2);
                 return priority1.CompareTo(priority2);
             });
 
+            // Populate the shared priority map if this file provides both a
+            // reference and a priority column. This ensures that other sources
+            // (e.g. the reinforcements) can inherit the same ordering.
+            foreach (var row in preprocessedRows)
+            {
+                if (row.TryGetValue("Referencia", out string referencia))
+                {
+                    int prio = GetRowPriority(row);
+                    if (prio != int.MaxValue)
+                    {
+                        priorityByReferencia[referencia] = prio;
+                    }
+                }
+            }
 
         }
 
@@ -220,9 +247,22 @@ namespace SimuLean
             if (row == null)
                 return int.MaxValue;
 
-            string key = row.Keys.FirstOrDefault(k => k.Equals("Priority", StringComparison.OrdinalIgnoreCase));
+            // Some spreadsheets use "priorities" instead of "Priority" as the
+            // column header. Look for either of them in a case-insensitive way.
+            string key = row.Keys.FirstOrDefault(k =>
+                k.Equals("Priority", StringComparison.OrdinalIgnoreCase) ||
+                k.Equals("priorities", StringComparison.OrdinalIgnoreCase));
+
             if (key != null && int.TryParse(row[key], out int parsed))
                 return parsed;
+
+            // If no explicit priority is found, try to obtain it from the
+            // shared map using the reference number.
+            if (row.TryGetValue("Referencia", out string referencia) &&
+                priorityByReferencia.TryGetValue(referencia, out int mapped))
+            {
+                return mapped;
+            }
 
             return int.MaxValue;
         }
@@ -238,8 +278,13 @@ namespace SimuLean
             var all = item.GetAllLabels();
             foreach (var kvp in all)
             {
-                if (kvp.Key.Equals(label, StringComparison.OrdinalIgnoreCase) && kvp.Value is double d)
-                    return d;
+                if (kvp.Key.Equals(label, StringComparison.OrdinalIgnoreCase) ||
+                    (label.Equals("Priority", StringComparison.OrdinalIgnoreCase) &&
+                     kvp.Key.Equals("priorities", StringComparison.OrdinalIgnoreCase)))
+                {
+                    if (kvp.Value is double d)
+                        return d;
+                }
             }
             return null;
         }
@@ -348,12 +393,20 @@ namespace SimuLean
                 newItem.SetLabelValue(kvp.Key, kvp.Value);
                 Debug.Log("Atributo asignado: " + kvp.Key + " = " + kvp.Value);
             }
-            
+
 
             // Obtiene la prioridad a partir de la etiqueta, ignorando mayúsculas
             double? prioVal = GetItemLabelValueIgnoreCase(newItem, "Priority");
             if (prioVal != null)
+            {
                 priority = (int)prioVal.Value;
+            }
+            else
+            {
+                // If the label was not found, fall back to the priority derived
+                // from the current row (which may come from the shared map).
+                priority = GetRowPriority(currentRow);
+            }
 
             // Asigna tipo, id y prioridad
             itemCounter++;
@@ -380,9 +433,8 @@ namespace SimuLean
             // Inicializa el iterador la primera vez.
             if (rowIterator == null)
             {
-                rowIterator = GetRowIterator().GetEnumerator();
-                // Use the preprocessed and ordered rows
-                rowIterator = GetRowIterator().GetEnumerator();
+                // Use the preprocessed and already ordered rows
+                rowIterator = preprocessedRows.GetEnumerator();
                 Debug.Log("Row iterator inicializado.");
             }
 
