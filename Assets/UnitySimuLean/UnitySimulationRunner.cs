@@ -23,7 +23,7 @@ namespace UnitySimuLean
         private int _inspectionCount;
 
         /// <inheritdoc />
-        public void Configure(int[] sequence)
+        public void Configure(string[] sequence)
         {
             if (sequence == null)
             {
@@ -43,7 +43,7 @@ namespace UnitySimuLean
                 {"type", new List<string>()}
             };
 
-            foreach (int partId in sequence)
+            foreach (var partId in sequence)
             {
                 // For simplicity all arrivals occur at time 0 with quantity 1 and
                 // a generic name. The important piece of information is the
@@ -51,7 +51,7 @@ namespace UnitySimuLean
                 dataDict["Time"].Add("0");
                 dataDict["Name"].Add("Part");
                 dataDict["Q"].Add("1");
-                dataDict["type"].Add(partId.ToString());
+                dataDict["type"].Add(partId);
             }
 
             // Rebuild source and sink with the new schedule.

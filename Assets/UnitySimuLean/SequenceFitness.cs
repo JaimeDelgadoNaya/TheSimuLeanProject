@@ -50,7 +50,7 @@ namespace UnitySimuLean
             }
 
             // 1. Configure simulation with the sequence represented by the chromosome.
-            int[] sequence = seqChromosome.GetSequence();
+            string[] sequence = seqChromosome.GetSequence();
             _runner.Configure(sequence);
 
             // 2. Run the simulation to completion.

@@ -23,7 +23,7 @@ namespace UnitySimuLean
         /// <param name="generations">Number of generations to evolve.</param>
         /// <param name="populationSize">Population size used by the GA.</param>
         /// <returns>The best sequence of parts discovered.</returns>
-        public static int[] OptimizePartSequence(
+        public static string[] OptimizePartSequence(
             ISimulationRunner runner,
             int numberOfParts,
             int generations = 100,
@@ -60,7 +60,7 @@ namespace UnitySimuLean
                     $"inspection count = {inspectionCount}");
             }
 
-            return bestSequence ?? Array.Empty<int>();
+            return bestSequence ?? Array.Empty<string>();
         }
     }
 }

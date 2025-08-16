@@ -6,7 +6,7 @@ namespace UnitySimuLean
     {
         private readonly UnitySimulationRunner runner = new UnitySimulationRunner();
 
-        public void Configure(int[] sequence) => runner.Configure(sequence);
+        public void Configure(string[] sequence) => runner.Configure(sequence);
 
         public void Run() => runner.Run();
 
