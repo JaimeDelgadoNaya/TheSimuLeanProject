@@ -7,7 +7,7 @@ namespace UnitySimuLean
         [SerializeField] private int numberOfParts = 10;
         [SerializeField] private int generations = 100;
         [SerializeField] private int populationSize = 50;
-        [SerializeField] private ISimulationRunner simulationRunner;
+        [SerializeField] private UnitySimulationRunnerBehaviour simulationRunner;
 
         private void Start()
         {
