@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using GeneticSharp.Domain.Chromosomes;
 using GeneticSharp.Domain.Randomizations;
@@ -11,18 +12,35 @@ namespace UnitySimuLean
     /// </summary>
     public class SequenceChromosome : ChromosomeBase
     {
+        private readonly string[] idByIndex;
+        private readonly Dictionary<string, int> indexById;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SequenceChromosome"/> class
         /// with a random permutation of part indices.
         /// </summary>
         /// <param name="length">Number of parts in the sequence.</param>
-        public SequenceChromosome(int length) : base(length)
+        public SequenceChromosome(int length)
+            : this(Enumerable.Range(0, length).Select(i => i.ToString()).ToList())
         {
-            var sequence = Enumerable.Range(0, length)
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SequenceChromosome"/> class
+        /// using the provided part identifiers.
+        /// </summary>
+        /// <param name="partIds">List of part identifiers.</param>
+        public SequenceChromosome(IList<string> partIds) : base(partIds.Count)
+        {
+            idByIndex = partIds.ToArray();
+            indexById = partIds.Select((id, idx) => new { id, idx })
+                                .ToDictionary(x => x.id, x => x.idx);
+
+            var sequence = Enumerable.Range(0, partIds.Count)
                                      .OrderBy(_ => RandomizationProvider.Current.GetDouble())
                                      .ToArray();
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i < partIds.Count; i++)
             {
                 ReplaceGene(i, new Gene(sequence[i]));
             }
@@ -58,12 +76,12 @@ namespace UnitySimuLean
         }
 
         /// <summary>
-        /// Gets the sequence represented by this chromosome as an array of part indices.
+        /// Gets the sequence represented by this chromosome as an array of part identifiers.
         /// </summary>
         /// <returns>An array representing the part order.</returns>
-        public int[] GetSequence()
+        public string[] GetSequence()
         {
-            return GetGenes().Select(g => (int)g.Value).ToArray();
+            return GetGenes().Select(g => idByIndex[(int)g.Value]).ToArray();
         }
     }
 }

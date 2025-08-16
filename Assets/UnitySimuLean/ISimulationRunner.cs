@@ -14,7 +14,7 @@ namespace UnitySimuLean
         /// so that consecutive calls start from the same conditions.
         /// </summary>
         /// <param name="sequence">Sequence of part identifiers.</param>
-        void Configure(int[] sequence);
+        void Configure(string[] sequence);
 
         /// <summary>
         /// Executes the simulation until completion.
