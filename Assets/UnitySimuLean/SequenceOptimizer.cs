@@ -1,9 +1,11 @@
+using System;
 using GeneticSharp.Domain;
 using GeneticSharp.Domain.Populations;
 using GeneticSharp.Domain.Selections;
 using GeneticSharp.Domain.Crossovers;
 using GeneticSharp.Domain.Mutations;
 using GeneticSharp.Domain.Terminations;
+using UnityEngine;
 
 namespace UnitySimuLean
 {
@@ -41,7 +43,24 @@ namespace UnitySimuLean
 
             ga.Start();
 
-            return ((SequenceChromosome)ga.BestChromosome).GetSequence();
+            var bestChromosome = ga.BestChromosome as SequenceChromosome;
+            var bestSequence = bestChromosome?.GetSequence();
+            var bestFitness = bestChromosome?.Fitness ?? 0;
+
+            if (bestSequence != null)
+            {
+                runner.Configure(bestSequence);
+                runner.Run();
+                var totalDelay = runner.TotalDelay;
+                var inspectionCount = runner.InspectionCount;
+
+                Debug.Log(
+                    $"Best sequence found: {string.Join(",", bestSequence)} " +
+                    $"with fitness = {bestFitness}, total delay = {totalDelay}, " +
+                    $"inspection count = {inspectionCount}");
+            }
+
+            return bestSequence ?? Array.Empty<int>();
         }
     }
 }
