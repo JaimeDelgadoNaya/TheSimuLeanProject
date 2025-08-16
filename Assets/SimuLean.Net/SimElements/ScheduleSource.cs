@@ -44,9 +44,10 @@ namespace SimuLean
         private List<Dictionary<string, string>> preprocessedRows; //Lista para reordenar filas de datos
         // Contador para asignar IDs únicos a cada ítem creado
         private int itemCounter = 0;
-        //constructor modificado con parametros opcionales Mod
-
-        public ScheduleSource(String name, SimClock state, String fileName = null, Dictionary<string, List<string>> dataDict = null, Item modelItem = null, string sheetName = null) : base(name, state)
+        // Constructor modificado con parámetros opcionales. Con autoSort=false se
+        // respetará el orden provisto (útil para órdenes generados por el GA).
+        /// <param name="autoSort">Cuando es false, se respeta el orden provisto (útil para órdenes generadas por el GA).</param>
+        public ScheduleSource(String name, SimClock state, String fileName = null, Dictionary<string, List<string>> dataDict = null, Item modelItem = null, string sheetName = null, bool autoSort = true) : base(name, state)
         {
             this.fileName = fileName;
             this.dataDict = dataDict;
@@ -70,29 +71,31 @@ namespace SimuLean
             {
                 this.fileType = null;
             }
-            // Preprocess rows and sort them first by Time and then by Priority.
-            // The priority column in the Excel files may be named either
-            // "Priority" or "priorities" (case-insensitive). To ensure we
-            // always respect the provided priorities we use GetRowPriority()
-            // which handles both cases.
+            // Preprocess rows. When autoSort is true (default), rows are sorted
+            // first by Time and then by Priority to ensure a deterministic
+            // processing order. With autoSort=false the provided order is
+            // respected, which is useful when la secuencia es generada por un GA.
 
             preprocessedRows = GetRowIterator().ToList();
-            preprocessedRows.Sort((row1, row2) =>
+            if (autoSort)
             {
-                double time1 = row1.ContainsKey("Time") && double.TryParse(row1["Time"], out double t1)
-                    ? t1 : simClock.GetSimulationTime();
-                double time2 = row2.ContainsKey("Time") && double.TryParse(row2["Time"], out double t2)
-                    ? t2 : simClock.GetSimulationTime();
-                int cmp = time1.CompareTo(time2);
-                if (cmp != 0)
+                preprocessedRows.Sort((row1, row2) =>
                 {
-                    return cmp;
-                }
+                    double time1 = row1.ContainsKey("Time") && double.TryParse(row1["Time"], out double t1)
+                        ? t1 : simClock.GetSimulationTime();
+                    double time2 = row2.ContainsKey("Time") && double.TryParse(row2["Time"], out double t2)
+                        ? t2 : simClock.GetSimulationTime();
+                    int cmp = time1.CompareTo(time2);
+                    if (cmp != 0)
+                    {
+                        return cmp;
+                    }
 
-                int priority1 = GetRowPriority(row1);
-                int priority2 = GetRowPriority(row2);
-                return priority1.CompareTo(priority2);
-            });
+                    int priority1 = GetRowPriority(row1);
+                    int priority2 = GetRowPriority(row2);
+                    return priority1.CompareTo(priority2);
+                });
+            }
 
             // Populate the shared priority map if this file provides both a
             // reference and a priority column. This ensures that other sources
