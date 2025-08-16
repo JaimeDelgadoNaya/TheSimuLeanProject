@@ -9,29 +9,45 @@
 
         int numberIterms;
 
-        public InfiniteSource(string name, SimClock state) : base(name, state)
+        IList<int> itemSequence;
+
+        int sequenceIndex;
+
+        public InfiniteSource(string name, SimClock state, IList<int> sequence = null) : base(name, state)
         {
+            this.itemSequence = sequence;
+        }
+
+        public void SetSequence(IList<int> sequence)
+        {
+            this.itemSequence = sequence;
+            sequenceIndex = 0;
         }
 
         public override void Start()
         {
             numberIterms = 0;
+            sequenceIndex = 0;
 
             simClock.ScheduleEvent(this, 0.0);
         }
 
         public override bool Unblock()
         {
+            if (lastItem == null)
+            {
+                lastItem = CreateItem();
+                if (lastItem == null)
+                    return false;
+            }
 
             if (this.GetOutput().SendItem(lastItem, this))
             {
-                lastItem = CreateItem();
-                numberIterms++;
+                lastItem = null;
                 return true;
             }
 
-            else
-                return false;
+            return false;
         }
 
         public int GetNumberItems()
@@ -56,24 +72,42 @@
 
         void Eventcs.Execute()
         {
-            int i = 0;
-            do
+            while (true)
             {
-                lastItem = CreateItem();
-                numberIterms++;
+                if (lastItem == null)
+                {
+                    lastItem = CreateItem();
+                    if (lastItem == null)
+                        break;
+                }
+
+                if (!this.GetOutput().SendItem(lastItem, this))
+                    break;
+
+                lastItem = null;
             }
-            while (this.GetOutput().SendItem(lastItem, this));
         }
 
         /// <summary>
-        /// Creates new item.
+        /// Creates new item following the predefined sequence if provided.
         /// </summary>
-        /// <returns>The item created.</returns>
+        /// <returns>The item created or <c>null</c> if sequence is finished.</returns>
         Item CreateItem()
         {
+            if (itemSequence != null && sequenceIndex >= itemSequence.Count)
+                return null;
+
+            int typeId = 1;
+            if (itemSequence != null)
+            {
+                typeId = itemSequence[sequenceIndex];
+                sequenceIndex++;
+            }
+
             Item nItem = new Item(simClock.GetSimulationTime());
-            nItem.SetId("type", 1, 1);
+            nItem.SetId("type", typeId, typeId);
             nItem.vItem = vElement.GenerateItem(nItem.GetId());
+            numberIterms++;
 
             return nItem;
         }

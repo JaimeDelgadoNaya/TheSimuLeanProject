@@ -17,9 +17,20 @@ namespace UnitySimuLean
 
         public Transform itemPosition;
 
+        public System.Collections.Generic.IList<int> partSequence;
+
+        public void SetSequence(System.Collections.Generic.IList<int> sequence)
+        {
+            partSequence = sequence;
+            if (theSource != null)
+            {
+                theSource.SetSequence(partSequence);
+            }
+        }
+
         override public void InitializeSim()
         {
-            theSource = new InfiniteSource(name, UnitySimClock.Instance.clock);
+            theSource = new InfiniteSource(name, UnitySimClock.Instance.clock, partSequence);
             if (Experimenter.HeadlessActive)
             {
                 theSource.vElement = new NullVElement();
@@ -32,6 +43,10 @@ namespace UnitySimuLean
         }
         override public void StartSim()
         {
+            if (partSequence != null)
+            {
+                theSource.SetSequence(partSequence);
+            }
             theSource.Start();
         }
 
