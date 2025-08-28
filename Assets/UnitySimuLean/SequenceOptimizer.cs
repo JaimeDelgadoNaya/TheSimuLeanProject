@@ -47,20 +47,19 @@ namespace UnitySimuLean
             var bestSequence = bestChromosome?.GetSequence();
             var bestFitness = bestChromosome?.Fitness ?? 0;
 
-            if (bestSequence != null)
+            if (bestChromosome != null && bestSequence != null)
             {
-                runner.Configure(bestSequence);
-                runner.Run();
-                var totalDelay = runner.TotalDelay;
-                var inspectionCount = runner.InspectionCount;
+                var (totalDelay, inspectionCount) = fitness.GetMetrics(bestChromosome);
 
                 Debug.Log(
                     $"Best sequence found: {string.Join(",", bestSequence)} " +
                     $"with fitness = {bestFitness}, total delay = {totalDelay}, " +
                     $"inspection count = {inspectionCount}");
+
+                return bestSequence;
             }
 
-            return bestSequence ?? Array.Empty<string>();
+            return Array.Empty<string>();
         }
     }
 }
