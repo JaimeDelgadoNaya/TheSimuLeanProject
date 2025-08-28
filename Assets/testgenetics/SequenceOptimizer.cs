@@ -16,7 +16,8 @@ namespace UnitySimuLean
     public static class SequenceOptimizer
     {
         /// <summary>
-        /// Runs a Genetic Algorithm and returns the best sequence found.
+        /// Runs a Genetic Algorithm and returns the best sequence found along
+        /// with its associated performance metrics.
         /// </summary>
         /// <param name="runner">Simulation runner used to evaluate sequences.</param>
         /// <param name="numberOfParts">Number of parts in the sequence.</param>
@@ -25,8 +26,12 @@ namespace UnitySimuLean
         /// <param name="selectionType">Selection operator used by the GA.</param>
         /// <param name="crossoverType">Crossover operator used by the GA.</param>
         /// <param name="mutationType">Mutation operator used by the GA.</param>
-        /// <returns>The best sequence of parts discovered.</returns>
-        public static string[] OptimizePartSequence(
+        /// <returns>
+        /// A tuple containing the best sequence, its total delay and inspection
+        /// count. If no sequence is found an empty sequence and default metrics
+        /// are returned.
+        /// </returns>
+        public static (string[] bestSequence, double totalDelay, int inspectionCount) OptimizePartSequence(
             ISimulationRunner runner,
             int numberOfParts,
             int generations = 100,
@@ -91,10 +96,10 @@ namespace UnitySimuLean
                     $"with fitness = {bestFitness}, total delay = {totalDelay}, " +
                     $"inspection count = {inspectionCount}");
 
-                return bestSequence;
+                return (bestSequence, totalDelay, inspectionCount);
             }
 
-            return Array.Empty<string>();
+            return (Array.Empty<string>(), double.NaN, 0);
         }
     }
 }

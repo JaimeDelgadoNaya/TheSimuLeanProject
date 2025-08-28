@@ -1,4 +1,8 @@
+using System.IO;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace UnitySimuLean
 {
@@ -13,6 +17,10 @@ namespace UnitySimuLean
         [Tooltip("Enable or disable genetic algorithm optimization.")]
         [SerializeField]
         private bool enableOptimization = true;
+
+        [Tooltip("Run in headless mode and exit after optimization.")]
+        [SerializeField]
+        private bool headlessMode = false;
 
         [Header("Genetic Algorithm Parameters")]
         [Tooltip("Number of parts in the sequence.")]
@@ -44,8 +52,15 @@ namespace UnitySimuLean
         [SerializeField]
         private UnitySimulationRunnerBehaviour simulationRunner;
 
+        private const string CsvFileName = "optimization_results.csv";
+
         private void Start()
         {
+            if (headlessMode)
+            {
+                Application.runInBackground = true;
+            }
+
             if (enableOptimization)
             {
                 RunOptimization();
@@ -73,7 +88,7 @@ namespace UnitySimuLean
             var crossType = settings != null ? settings.crossoverType : crossoverType;
             var mutType = settings != null ? settings.mutationType : mutationType;
 
-            var bestSequence = SequenceOptimizer.OptimizePartSequence(
+            var (bestSequence, totalDelay, inspectionCount) = SequenceOptimizer.OptimizePartSequence(
                 simulationRunner,
                 nParts,
                 gens,
@@ -85,12 +100,39 @@ namespace UnitySimuLean
             if (bestSequence.Length > 0)
             {
                 Debug.Log($"Optimized sequence: {string.Join(",", bestSequence)}");
-                Debug.Log($"Total delay: {simulationRunner.TotalDelay}, inspection count: {simulationRunner.InspectionCount}");
+                Debug.Log($"Total delay: {totalDelay}, inspection count: {inspectionCount}");
+                WriteResultsToCsv(bestSequence, totalDelay, inspectionCount);
             }
             else
             {
                 Debug.Log("No sequence returned from optimizer.");
             }
+
+            if (headlessMode)
+            {
+                Debug.Log("Headless mode active. Exiting application.");
+#if UNITY_EDITOR
+                EditorApplication.isPlaying = false;
+#else
+                Application.Quit();
+#endif
+            }
+        }
+
+        private void WriteResultsToCsv(string[] sequence, double totalDelay, int inspectionCount)
+        {
+            var logsPath = Path.Combine(Application.dataPath, "..", "Logs");
+            Directory.CreateDirectory(logsPath);
+            var csvPath = Path.Combine(logsPath, CsvFileName);
+            if (!File.Exists(csvPath))
+            {
+                File.WriteAllText(csvPath, "Sequence,TotalDelay,InspectionCount\n");
+            }
+
+            var sequenceValue = string.Join(",", sequence);
+            var line = $"\"{sequenceValue}\",{totalDelay},{inspectionCount}\n";
+            File.AppendAllText(csvPath, line);
+            Debug.Log($"Results written to {csvPath}");
         }
     }
 }
