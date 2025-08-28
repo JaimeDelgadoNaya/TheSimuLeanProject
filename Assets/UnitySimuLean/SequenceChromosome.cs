@@ -8,12 +8,13 @@ namespace UnitySimuLean
 {
     /// <summary>
     /// Chromosome that represents a sequence of part entries.
-    /// Each gene contains the index of a part in the sequence.
+    /// Each gene contains the index of a part in the sequence and
+    /// provides lookups between part identifiers and their positions.
     /// </summary>
     public class SequenceChromosome : ChromosomeBase
     {
-        private readonly string[] idByIndex;
-        private readonly Dictionary<string, int> indexById;
+        private readonly string[] idByIndex; // Maps index to part identifier.
+        private readonly Dictionary<string, int> indexById; // Reverse map from identifier to index.
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SequenceChromosome"/> class
@@ -82,6 +83,45 @@ namespace UnitySimuLean
         public string[] GetSequence()
         {
             return GetGenes().Select(g => idByIndex[(int)g.Value]).ToArray();
+        }
+
+        /// <summary>
+        /// Gets the index associated with the specified part identifier in the original collection.
+        /// </summary>
+        /// <param name="partId">The part identifier.</param>
+        /// <returns>The zero-based index of the part.</returns>
+        /// <exception cref="ArgumentException">Thrown when the part identifier is unknown.</exception>
+        public int GetPartIndex(string partId)
+        {
+            if (!indexById.TryGetValue(partId, out var idx))
+            {
+                throw new ArgumentException($"Unknown part identifier: {partId}", nameof(partId));
+            }
+
+            return idx;
+        }
+
+        /// <summary>
+        /// Gets the position of the specified part identifier within the current sequence.
+        /// </summary>
+        /// <param name="partId">The part identifier.</param>
+        /// <returns>The zero-based position of the part inside the chromosome.</returns>
+        /// <exception cref="ArgumentException">Thrown when the part identifier is unknown.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the part is not part of the sequence.</exception>
+        public int GetPosition(string partId)
+        {
+            var partIndex = GetPartIndex(partId);
+            var genes = GetGenes();
+
+            for (int i = 0; i < genes.Length; i++)
+            {
+                if ((int)genes[i].Value == partIndex)
+                {
+                    return i;
+                }
+            }
+
+            throw new InvalidOperationException($"Part identifier '{partId}' does not exist in the chromosome sequence.");
         }
     }
 }
