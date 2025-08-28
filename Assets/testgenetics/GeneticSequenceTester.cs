@@ -2,16 +2,29 @@ using UnityEngine;
 
 namespace UnitySimuLean
 {
+    [System.Serializable]
+    public class GASettings
+    {
+        public int numberOfParts = 10;
+        public int generations = 100;
+        public int populationSize = 50;
+        public SelectionOperator selection = SelectionOperator.Elite;
+        public CrossoverOperator crossover = CrossoverOperator.Ordered;
+        public MutationOperator mutation = MutationOperator.Twors;
+    }
+
     public class GeneticSequenceTester : MonoBehaviour
     {
-        [SerializeField] private int numberOfParts = 10;
-        [SerializeField] private int generations = 100;
-        [SerializeField] private int populationSize = 50;
+        [SerializeField] private bool enableOptimization = true;
+        [SerializeField] private GASettings settings = new GASettings();
         [SerializeField] private UnitySimulationRunnerBehaviour simulationRunner;
 
         private void Start()
         {
-            RunOptimization();
+            if (enableOptimization)
+            {
+                RunOptimization();
+            }
         }
 
         public void RunOptimization()
@@ -24,9 +37,12 @@ namespace UnitySimuLean
 
             var bestSequence = SequenceOptimizer.OptimizePartSequence(
                 simulationRunner,
-                numberOfParts,
-                generations,
-                populationSize);
+                settings.numberOfParts,
+                settings.generations,
+                settings.populationSize,
+                settings.selection,
+                settings.crossover,
+                settings.mutation);
 
             if (bestSequence.Length > 0)
             {

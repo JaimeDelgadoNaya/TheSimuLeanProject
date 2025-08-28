@@ -13,6 +13,12 @@ namespace UnitySimuLean
     /// Utility class that configures and runs a Genetic Algorithm to optimize
     /// the sequence of parts entering a SimuLean model.
     /// </summary>
+    public enum SelectionOperator { Elite, RouletteWheel, Tournament }
+
+    public enum CrossoverOperator { Ordered, OnePoint, TwoPoint }
+
+    public enum MutationOperator { Twors, ReverseSequence, Uniform }
+
     public static class SequenceOptimizer
     {
         /// <summary>
@@ -22,19 +28,43 @@ namespace UnitySimuLean
         /// <param name="numberOfParts">Number of parts in the sequence.</param>
         /// <param name="generations">Number of generations to evolve.</param>
         /// <param name="populationSize">Population size used by the GA.</param>
+        /// <param name="selectionOperator">Selection strategy.</param>
+        /// <param name="crossoverOperator">Crossover strategy.</param>
+        /// <param name="mutationOperator">Mutation strategy.</param>
         /// <returns>The best sequence of parts discovered.</returns>
         public static string[] OptimizePartSequence(
             ISimulationRunner runner,
             int numberOfParts,
-            int generations = 100,
-            int populationSize = 50)
+            int generations,
+            int populationSize,
+            SelectionOperator selectionOperator,
+            CrossoverOperator crossoverOperator,
+            MutationOperator mutationOperator)
         {
             var fitness = new SequenceFitness(runner);
             var chromosome = new SequenceChromosome(numberOfParts);
             var population = new Population(populationSize, populationSize * 2, chromosome);
-            var selection = new EliteSelection();
-            var crossover = new OrderedCrossover();
-            var mutation = new TworsMutation();
+
+            ISelection selection = selectionOperator switch
+            {
+                SelectionOperator.RouletteWheel => new RouletteWheelSelection(),
+                SelectionOperator.Tournament => new TournamentSelection(),
+                _ => new EliteSelection()
+            };
+
+            ICrossover crossover = crossoverOperator switch
+            {
+                CrossoverOperator.OnePoint => new OnePointCrossover(),
+                CrossoverOperator.TwoPoint => new TwoPointCrossover(),
+                _ => new OrderedCrossover()
+            };
+
+            IMutation mutation = mutationOperator switch
+            {
+                MutationOperator.ReverseSequence => new ReverseSequenceMutation(),
+                MutationOperator.Uniform => new UniformMutation(),
+                _ => new TworsMutation()
+            };
 
             var ga = new GeneticAlgorithm(population, fitness, selection, crossover, mutation)
             {
