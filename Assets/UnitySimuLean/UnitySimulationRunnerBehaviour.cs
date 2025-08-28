@@ -4,9 +4,17 @@ namespace UnitySimuLean
 {
     public class UnitySimulationRunnerBehaviour : MonoBehaviour, ISimulationRunner
     {
+        [SerializeField] private UnityScheduleSource source;
+        [SerializeField] private UnitySink sink;
+
         private readonly UnitySimulationRunner runner = new UnitySimulationRunner();
 
-        public void Configure(string[] sequence) => runner.Configure(sequence);
+        public void Configure(string[] sequence)
+        {
+            runner.SourceView = source;
+            runner.SinkView = sink;
+            runner.Configure(sequence);
+        }
 
         public void Run() => runner.Run();
 

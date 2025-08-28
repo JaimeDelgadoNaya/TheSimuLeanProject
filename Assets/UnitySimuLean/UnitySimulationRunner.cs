@@ -19,6 +19,20 @@ namespace UnitySimuLean
         private ScheduleSource _source;
         private Sink _sink;
 
+        /// <summary>
+        /// Optional visual representation for the initial <see cref="ScheduleSource"/>.
+        /// When set, generated items will use this <see cref="VElement"/> instead of a
+        /// headless <see cref="NullVElement"/>.
+        /// </summary>
+        public VElement SourceView { get; set; }
+
+        /// <summary>
+        /// Optional visual representation for the final <see cref="Sink"/>.
+        /// When set, items leaving the model will interact with this
+        /// <see cref="VElement"/>.
+        /// </summary>
+        public VElement SinkView { get; set; }
+
         private double _totalDelay;
         private int _inspectionCount;
 
@@ -54,9 +68,17 @@ namespace UnitySimuLean
                 dataDict["type"].Add(partId);
             }
 
-            // Rebuild source and sink with the new schedule.
-            _source = new ScheduleSource("Source", _clock, null, dataDict, null, null);
-            _sink = new Sink("Sink", _clock);
+            // Rebuild source and sink with the new schedule. Attach provided
+            // visual elements when available so that items can be observed in
+            // the Unity scene. Fall back to headless execution otherwise.
+            _source = new ScheduleSource("Source", _clock, null, dataDict, null, null)
+            {
+                vElement = SourceView ?? new NullVElement()
+            };
+            _sink = new Sink("Sink", _clock)
+            {
+                vElement = SinkView ?? new NullVElement()
+            };
             GeneralLink.CreateLink(_source, new List<Element> { _sink });
 
             // Reset metrics.
