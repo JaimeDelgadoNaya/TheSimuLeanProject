@@ -4,18 +4,31 @@ namespace UnitySimuLean
 {
     public class GeneticSequenceTester : MonoBehaviour
     {
+        [SerializeField] private bool enableOptimization = true;
         [SerializeField] private int numberOfParts = 10;
         [SerializeField] private int generations = 100;
         [SerializeField] private int populationSize = 50;
+        [SerializeField] private SelectionType selectionType = SelectionType.Elite;
+        [SerializeField] private CrossoverType crossoverType = CrossoverType.Ordered;
+        [SerializeField] private MutationType mutationType = MutationType.Twors;
         [SerializeField] private UnitySimulationRunnerBehaviour simulationRunner;
 
         private void Start()
         {
-            RunOptimization();
+            if (enableOptimization)
+            {
+                RunOptimization();
+            }
         }
 
+        [ContextMenu("Run Optimization")]
         public void RunOptimization()
         {
+            if (!enableOptimization)
+            {
+                return;
+            }
+
             if (simulationRunner == null)
             {
                 Debug.LogWarning("Simulation runner not assigned.");
@@ -26,7 +39,10 @@ namespace UnitySimuLean
                 simulationRunner,
                 numberOfParts,
                 generations,
-                populationSize);
+                populationSize,
+                selectionType,
+                crossoverType,
+                mutationType);
 
             if (bestSequence.Length > 0)
             {

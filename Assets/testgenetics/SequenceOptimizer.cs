@@ -22,19 +22,54 @@ namespace UnitySimuLean
         /// <param name="numberOfParts">Number of parts in the sequence.</param>
         /// <param name="generations">Number of generations to evolve.</param>
         /// <param name="populationSize">Population size used by the GA.</param>
+        /// <param name="selectionType">Selection operator used by the GA.</param>
+        /// <param name="crossoverType">Crossover operator used by the GA.</param>
+        /// <param name="mutationType">Mutation operator used by the GA.</param>
         /// <returns>The best sequence of parts discovered.</returns>
         public static string[] OptimizePartSequence(
             ISimulationRunner runner,
             int numberOfParts,
             int generations = 100,
-            int populationSize = 50)
+            int populationSize = 50,
+            SelectionType selectionType = SelectionType.Elite,
+            CrossoverType crossoverType = CrossoverType.Ordered,
+            MutationType mutationType = MutationType.Twors)
         {
             var fitness = new SequenceFitness(runner);
             var chromosome = new SequenceChromosome(numberOfParts);
             var population = new Population(populationSize, populationSize * 2, chromosome);
-            var selection = new EliteSelection();
-            var crossover = new OrderedCrossover();
-            var mutation = new TworsMutation();
+            ISelection selection;
+            switch (selectionType)
+            {
+                case SelectionType.RouletteWheel:
+                    selection = new RouletteWheelSelection();
+                    break;
+                default:
+                    selection = new EliteSelection();
+                    break;
+            }
+
+            ICrossover crossover;
+            switch (crossoverType)
+            {
+                case CrossoverType.OnePoint:
+                    crossover = new OnePointCrossover();
+                    break;
+                default:
+                    crossover = new OrderedCrossover();
+                    break;
+            }
+
+            IMutation mutation;
+            switch (mutationType)
+            {
+                case MutationType.ReverseSequence:
+                    mutation = new ReverseSequenceMutation();
+                    break;
+                default:
+                    mutation = new TworsMutation();
+                    break;
+            }
 
             var ga = new GeneticAlgorithm(population, fitness, selection, crossover, mutation)
             {
