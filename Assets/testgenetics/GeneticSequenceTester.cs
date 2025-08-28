@@ -4,14 +4,45 @@ namespace UnitySimuLean
 {
     public class GeneticSequenceTester : MonoBehaviour
     {
-        [SerializeField] private bool enableOptimization = true;
-        [SerializeField] private int numberOfParts = 10;
-        [SerializeField] private int generations = 100;
-        [SerializeField] private int populationSize = 50;
-        [SerializeField] private SelectionType selectionType = SelectionType.Elite;
-        [SerializeField] private CrossoverType crossoverType = CrossoverType.Ordered;
-        [SerializeField] private MutationType mutationType = MutationType.Twors;
-        [SerializeField] private UnitySimulationRunnerBehaviour simulationRunner;
+        [Header("Configuration")]
+        [Tooltip("Optional settings asset that overrides local parameters.")]
+        [SerializeField]
+        private GeneticAlgorithmSettings settings;
+
+        [Header("General Settings")]
+        [Tooltip("Enable or disable genetic algorithm optimization.")]
+        [SerializeField]
+        private bool enableOptimization = true;
+
+        [Header("Genetic Algorithm Parameters")]
+        [Tooltip("Number of parts in the sequence.")]
+        [Min(1)]
+        [SerializeField]
+        private int numberOfParts = 10;
+        [Tooltip("Number of generations to evolve.")]
+        [Min(1)]
+        [SerializeField]
+        private int generations = 100;
+        [Tooltip("Population size per generation.")]
+        [Min(1)]
+        [SerializeField]
+        private int populationSize = 50;
+
+        [Header("Genetic Operators")]
+        [Tooltip("Selection method to use.")]
+        [SerializeField]
+        private SelectionType selectionType = SelectionType.Elite;
+        [Tooltip("Crossover operator to apply.")]
+        [SerializeField]
+        private CrossoverType crossoverType = CrossoverType.Ordered;
+        [Tooltip("Mutation operator to apply.")]
+        [SerializeField]
+        private MutationType mutationType = MutationType.Twors;
+
+        [Header("Dependencies")]
+        [Tooltip("Simulation runner used to evaluate sequences.")]
+        [SerializeField]
+        private UnitySimulationRunnerBehaviour simulationRunner;
 
         private void Start()
         {
@@ -35,14 +66,21 @@ namespace UnitySimuLean
                 return;
             }
 
+            var nParts = settings != null ? settings.numberOfParts : numberOfParts;
+            var gens = settings != null ? settings.generations : generations;
+            var popSize = settings != null ? settings.populationSize : populationSize;
+            var selType = settings != null ? settings.selectionType : selectionType;
+            var crossType = settings != null ? settings.crossoverType : crossoverType;
+            var mutType = settings != null ? settings.mutationType : mutationType;
+
             var bestSequence = SequenceOptimizer.OptimizePartSequence(
                 simulationRunner,
-                numberOfParts,
-                generations,
-                populationSize,
-                selectionType,
-                crossoverType,
-                mutationType);
+                nParts,
+                gens,
+                popSize,
+                selType,
+                crossType,
+                mutType);
 
             if (bestSequence.Length > 0)
             {
