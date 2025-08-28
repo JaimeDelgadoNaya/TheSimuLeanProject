@@ -4,6 +4,7 @@ namespace UnitySimuLean
 {
     public class GeneticSequenceTester : MonoBehaviour
     {
+        [SerializeField] private bool enableOptimization = false;
         [SerializeField] private int numberOfParts = 10;
         [SerializeField] private int generations = 100;
         [SerializeField] private int populationSize = 50;
@@ -11,7 +12,10 @@ namespace UnitySimuLean
 
         private void Start()
         {
-            RunOptimization();
+            if (enableOptimization)
+            {
+                RunOptimization();
+            }
         }
 
         public void RunOptimization()
