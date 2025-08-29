@@ -93,7 +93,17 @@ namespace UnitySimuLean
         /// <returns>The delay and inspection count associated with the chromosome.</returns>
         public (double totalDelay, int inspectionCount) GetMetrics(IChromosome chromosome)
         {
-            return _metrics.TryGetValue(chromosome, out var m) ? m : (double.NaN, 0);
+            if (_metrics.TryGetValue(chromosome, out var metrics))
+            {
+                // Remove metrics from previous chromosomes to avoid uncontrolled
+                // growth of the dictionary. Retain only the metrics for the
+                // requested chromosome so they remain available if needed again.
+                _metrics.Clear();
+                _metrics[chromosome] = metrics;
+                return metrics;
+            }
+
+            return (double.NaN, 0);
         }
     }
 }
