@@ -40,6 +40,11 @@ namespace UnitySimuLean
             CrossoverType crossoverType = CrossoverType.Ordered,
             MutationType mutationType = MutationType.Twors)
         {
+            // GeneticSharp requires at least two chromosomes per generation.
+            // Clamp the population size to the minimum allowed value to avoid
+            // runtime exceptions when a smaller value is provided.
+            populationSize = Math.Max(2, populationSize);
+
             var fitness = new SequenceFitness(runner);
             var chromosome = new SequenceChromosome(numberOfParts);
             var population = new Population(populationSize, populationSize * 2, chromosome);
