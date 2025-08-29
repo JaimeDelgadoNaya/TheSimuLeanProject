@@ -88,7 +88,7 @@ namespace UnitySimuLean
             var crossType = settings != null ? settings.crossoverType : crossoverType;
             var mutType = settings != null ? settings.mutationType : mutationType;
 
-            var (bestSequence, totalDelay, inspectionCount) = SequenceOptimizer.OptimizePartSequence(
+            var result = SequenceOptimizer.OptimizePartSequence(
                 simulationRunner,
                 nParts,
                 gens,
@@ -96,6 +96,8 @@ namespace UnitySimuLean
                 selType,
                 crossType,
                 mutType);
+
+            var (bestSequence, totalDelay, inspectionCount) = result;
 
             if (bestSequence.Length > 0)
             {

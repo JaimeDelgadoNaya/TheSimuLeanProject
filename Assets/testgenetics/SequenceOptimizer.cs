@@ -84,22 +84,21 @@ namespace UnitySimuLean
             ga.Start();
 
             var bestChromosome = ga.BestChromosome as SequenceChromosome;
-            var bestSequence = bestChromosome?.GetSequence();
-            var bestFitness = bestChromosome?.Fitness ?? 0;
-
-            if (bestChromosome != null && bestSequence != null)
+            if (bestChromosome == null)
             {
-                var (totalDelay, inspectionCount) = fitness.GetMetrics(bestChromosome);
-
-                Debug.Log(
-                    $"Best sequence found: {string.Join(",", bestSequence)} " +
-                    $"with fitness = {bestFitness}, total delay = {totalDelay}, " +
-                    $"inspection count = {inspectionCount}");
-
-                return (bestSequence, totalDelay, inspectionCount);
+                return (Array.Empty<string>(), double.NaN, 0);
             }
 
-            return (Array.Empty<string>(), double.NaN, 0);
+            var bestSequence = bestChromosome.GetSequence();
+            var bestFitness = bestChromosome.Fitness ?? 0;
+            var (totalDelay, inspectionCount) = fitness.GetMetrics(bestChromosome);
+
+            Debug.Log(
+                $"Best sequence found: {string.Join(",", bestSequence)} " +
+                $"with fitness = {bestFitness}, total delay = {totalDelay}, " +
+                $"inspection count = {inspectionCount}");
+
+            return (bestSequence, totalDelay, inspectionCount);
         }
     }
 }
