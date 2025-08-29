@@ -32,7 +32,9 @@ namespace UnitySimuLean
         [SerializeField]
         private int generations = 100;
         [Tooltip("Population size per generation.")]
-        [Min(1)]
+        // GeneticSharp requires at least two chromosomes per generation.
+        // Enforce a minimum of 2 in the inspector to prevent runtime errors.
+        [Min(2)]
         [SerializeField]
         private int populationSize = 50;
 
