@@ -18,7 +18,7 @@ namespace UnitySimuLean
 
         public void Run() => runner.Run();
 
-        public double TotalDelay => runner.TotalDelay;
+        public int DelayCount => runner.DelayCount;
 
         public int InspectionCount => runner.InspectionCount;
     }

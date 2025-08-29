@@ -32,7 +32,9 @@ namespace UnitySimuLean
         [SerializeField]
         private int generations = 100;
         [Tooltip("Population size per generation.")]
-        [Min(1)]
+        // GeneticSharp requires at least two chromosomes per generation.
+        // Enforce a minimum of 2 in the inspector to prevent runtime errors.
+        [Min(2)]
         [SerializeField]
         private int populationSize = 50;
 
@@ -97,13 +99,13 @@ namespace UnitySimuLean
                 crossType,
                 mutType);
 
-            var (bestSequence, totalDelay, inspectionCount) = result;
+            var (bestSequence, delayCount, inspectionCount) = result;
 
             if (bestSequence.Length > 0)
             {
                 Debug.Log($"Optimized sequence: {string.Join(",", bestSequence)}");
-                Debug.Log($"Total delay: {totalDelay}, inspection count: {inspectionCount}");
-                WriteResultsToCsv(bestSequence, totalDelay, inspectionCount);
+                Debug.Log($"Delay count: {delayCount}, inspection count: {inspectionCount}");
+                WriteResultsToCsv(bestSequence, delayCount, inspectionCount);
             }
             else
             {
@@ -121,18 +123,18 @@ namespace UnitySimuLean
             }
         }
 
-        private void WriteResultsToCsv(string[] sequence, double totalDelay, int inspectionCount)
+        private void WriteResultsToCsv(string[] sequence, int delayCount, int inspectionCount)
         {
             var logsPath = Path.Combine(Application.dataPath, "..", "Logs");
             Directory.CreateDirectory(logsPath);
             var csvPath = Path.Combine(logsPath, CsvFileName);
             if (!File.Exists(csvPath))
             {
-                File.WriteAllText(csvPath, "Sequence,TotalDelay,InspectionCount\n");
+                File.WriteAllText(csvPath, "Sequence,DelayCount,InspectionCount\n");
             }
 
             var sequenceValue = string.Join(",", sequence);
-            var line = $"\"{sequenceValue}\",{totalDelay},{inspectionCount}\n";
+            var line = $"\"{sequenceValue}\",{delayCount},{inspectionCount}\n";
             File.AppendAllText(csvPath, line);
             Debug.Log($"Results written to {csvPath}");
         }

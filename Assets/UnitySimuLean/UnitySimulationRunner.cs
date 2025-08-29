@@ -33,7 +33,7 @@ namespace UnitySimuLean
         /// </summary>
         public VElement SinkView { get; set; }
 
-        private double _totalDelay;
+        private int _delayCount;
         private int _inspectionCount;
 
         /// <inheritdoc />
@@ -82,7 +82,7 @@ namespace UnitySimuLean
             GeneralLink.CreateLink(_source, new List<Element> { _sink });
 
             // Reset metrics.
-            _totalDelay = 0.0;
+            _delayCount = 0;
             _inspectionCount = 0;
         }
 
@@ -103,12 +103,12 @@ namespace UnitySimuLean
             }
 
             // Collect metrics from the sink.
-            _totalDelay = _sink.GetRetrasados();
+            _delayCount = _sink.GetRetrasados();
             _inspectionCount = _sink.GetInspecciones();
         }
 
         /// <inheritdoc />
-        public double TotalDelay => _totalDelay;
+        public int DelayCount => _delayCount;
 
         /// <inheritdoc />
         public int InspectionCount => _inspectionCount;
