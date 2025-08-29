@@ -27,11 +27,11 @@ namespace UnitySimuLean
         /// <param name="crossoverType">Crossover operator used by the GA.</param>
         /// <param name="mutationType">Mutation operator used by the GA.</param>
         /// <returns>
-        /// A tuple containing the best sequence, its total delay and inspection
+        /// A tuple containing the best sequence, its delay count and inspection
         /// count. If no sequence is found an empty sequence and default metrics
         /// are returned.
         /// </returns>
-        public static (string[] bestSequence, double totalDelay, int inspectionCount) OptimizePartSequence(
+        public static (string[] bestSequence, int delayCount, int inspectionCount) OptimizePartSequence(
             ISimulationRunner runner,
             int numberOfParts,
             int generations = 100,
@@ -86,19 +86,19 @@ namespace UnitySimuLean
             var bestChromosome = ga.BestChromosome as SequenceChromosome;
             if (bestChromosome == null)
             {
-                return (Array.Empty<string>(), double.NaN, 0);
+                return (Array.Empty<string>(), 0, 0);
             }
 
             var bestSequence = bestChromosome.GetSequence();
             var bestFitness = bestChromosome.Fitness ?? 0;
-            var (totalDelay, inspectionCount) = fitness.GetMetrics(bestChromosome);
+            var (delayCount, inspectionCount) = fitness.GetMetrics(bestChromosome);
 
             Debug.Log(
                 $"Best sequence found: {string.Join(",", bestSequence)} " +
-                $"with fitness = {bestFitness}, total delay = {totalDelay}, " +
+                $"with fitness = {bestFitness}, delay count = {delayCount}, " +
                 $"inspection count = {inspectionCount}");
 
-            return (bestSequence, totalDelay, inspectionCount);
+            return (bestSequence, delayCount, inspectionCount);
         }
     }
 }

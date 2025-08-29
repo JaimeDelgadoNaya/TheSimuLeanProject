@@ -22,9 +22,9 @@ namespace UnitySimuLean
         void Run();
 
         /// <summary>
-        /// Gets the accumulated delay for the last executed simulation.
+        /// Gets the number of delayed items from the last executed simulation.
         /// </summary>
-        double TotalDelay { get; }
+        int DelayCount { get; }
 
         /// <summary>
         /// Gets the number of inspections performed during the last run.

@@ -14,8 +14,8 @@ namespace UnitySimuLean
     {
         private readonly ISimulationRunner _runner;
         private readonly double _alpha;
-        private readonly Dictionary<IChromosome, (double delay, int inspections)> _metrics =
-            new Dictionary<IChromosome, (double delay, int inspections)>();
+        private readonly Dictionary<IChromosome, (int delay, int inspections)> _metrics =
+            new Dictionary<IChromosome, (int delay, int inspections)>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SequenceFitness"/> class.
@@ -49,10 +49,10 @@ namespace UnitySimuLean
         /// </summary>
         /// <param name="chromosome">Chromosome to evaluate.</param>
         /// <returns>
-        /// A tuple containing the fitness, total delay and inspection count
+        /// A tuple containing the fitness, delay count and inspection count
         /// obtained from the simulation run.
         /// </returns>
-        public (double fitness, double totalDelay, int inspectionCount) EvaluateWithMetrics(IChromosome chromosome)
+        public (double fitness, int delayCount, int inspectionCount) EvaluateWithMetrics(IChromosome chromosome)
         {
             if (chromosome == null)
             {
@@ -74,24 +74,24 @@ namespace UnitySimuLean
             _runner.Run();
 
             // 3. Collect performance metrics from the simulation.
-            double totalDelay = _runner.TotalDelay;
+            int delayCount = _runner.DelayCount;
             int inspectionCount = _runner.InspectionCount;
 
             // Store metrics for later retrieval.
-            _metrics[chromosome] = (totalDelay, inspectionCount);
+            _metrics[chromosome] = (delayCount, inspectionCount);
 
             // 4. Compute a fitness score. Lower delays/inspections yield a higher value.
-            double fitness = -(totalDelay + _alpha * inspectionCount);
+            double fitness = -(delayCount + _alpha * inspectionCount);
 
-            return (fitness, totalDelay, inspectionCount);
+            return (fitness, delayCount, inspectionCount);
         }
 
         /// <summary>
         /// Gets the metrics collected for a previously evaluated chromosome.
         /// </summary>
         /// <param name="chromosome">Chromosome whose metrics are requested.</param>
-        /// <returns>The delay and inspection count associated with the chromosome.</returns>
-        public (double totalDelay, int inspectionCount) GetMetrics(IChromosome chromosome)
+        /// <returns>The delay count and inspection count associated with the chromosome.</returns>
+        public (int delayCount, int inspectionCount) GetMetrics(IChromosome chromosome)
         {
             if (_metrics.TryGetValue(chromosome, out var metrics))
             {
@@ -103,7 +103,7 @@ namespace UnitySimuLean
                 return metrics;
             }
 
-            return (double.NaN, 0);
+            return (0, 0);
         }
     }
 }
