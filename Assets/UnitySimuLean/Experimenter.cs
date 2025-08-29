@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnitySimuLean.Utilities;
+using SimuLean;
 
 namespace UnitySimuLean
 {
@@ -52,6 +53,7 @@ namespace UnitySimuLean
         {
             currentScenario = 0;
             this.SetScenario(currentScenario);
+            ServerProcess.ResetDelays();
             UnitySimClock.Instance.SimEvents.OnSimStart.Invoke(maxTime);
 
             UnitySimClock.Instance.SetTimeScale(this.timeScale);
@@ -150,6 +152,8 @@ namespace UnitySimuLean
                 fileWriter.AddText(new string[] { (currentScenario - 1).ToString(), oElements[i].name, Variables[i], GetPropertyValue(oElements[i], Variables[i]).ToString() });
 
             }
+            fileWriter.AddText(new string[] { (currentScenario - 1).ToString(), "System", "Delays", ServerProcess.TotalDelays.ToString() });
+            ServerProcess.ResetDelays();
 
             if (!SetScenario(currentScenario))
                 this.FinishExperiment();

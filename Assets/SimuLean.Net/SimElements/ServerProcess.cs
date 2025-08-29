@@ -11,6 +11,8 @@ namespace SimuLean
         public double loadTime = 0.0;
         public double lastDelay = 0.0;
 
+        public static int TotalDelays { get; private set; } = 0;
+
         int capacity;
 
         DoubleRandomProcess delay;
@@ -39,10 +41,15 @@ namespace SimuLean
             typeItem = 0;
         }
 
+        public static void ResetDelays()
+        {
+            TotalDelays = 0;
+        }
+
         public double GetDelay()
         {
             double delay = this.delay.NextValue();
-
+            TotalDelays++;
             return delay;
         }
 
