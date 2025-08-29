@@ -13,7 +13,7 @@ namespace UnitySimuLean
     public class SequenceFitness : IFitness
     {
         private readonly ISimulationRunner _runner;
-        private readonly double _alpha;
+        private readonly int _requiredInspectionCount;
         private readonly Dictionary<IChromosome, (int delay, int inspections)> _metrics =
             new Dictionary<IChromosome, (int delay, int inspections)>();
 
@@ -21,14 +21,15 @@ namespace UnitySimuLean
         /// Initializes a new instance of the <see cref="SequenceFitness"/> class.
         /// </summary>
         /// <param name="runner">Simulation runner used to evaluate sequences.</param>
-        /// <param name="alpha">
-        /// Weight applied to the inspection count when computing the fitness
-        /// value. Defaults to 1.
+        /// <param name="requiredInspectionCount">
+        /// Number of inspections that must remain constant across evaluations.
+        /// Any chromosome producing a different value will receive the worst
+        /// possible fitness.
         /// </param>
-        public SequenceFitness(ISimulationRunner runner, double alpha = 1.0)
+        public SequenceFitness(ISimulationRunner runner, int requiredInspectionCount)
         {
             _runner = runner ?? throw new ArgumentNullException(nameof(runner));
-            _alpha = alpha;
+            _requiredInspectionCount = requiredInspectionCount;
         }
 
         /// <summary>
@@ -80,8 +81,10 @@ namespace UnitySimuLean
             // Store metrics for later retrieval.
             _metrics[chromosome] = (delayCount, inspectionCount);
 
-            // 4. Compute a fitness score. Lower delays/inspections yield a higher value.
-            double fitness = -(delayCount + _alpha * inspectionCount);
+            // 4. Compute a fitness score. Any change in inspection count is heavily penalised.
+            double fitness = inspectionCount == _requiredInspectionCount
+                ? -delayCount
+                : double.MinValue;
 
             return (fitness, delayCount, inspectionCount);
         }
