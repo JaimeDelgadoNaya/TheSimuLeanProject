@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using SimuLean;
 
 namespace UnitySimuLean
@@ -35,6 +36,14 @@ namespace UnitySimuLean
 
         private int _delayCount;
         private int _inspectionCount;
+
+        /// <summary>
+        /// Optional order provided by a genetic algorithm. Each entry represents
+        /// the zero-based index of a row read from the Excel schedule. When
+        /// specified, <see cref="ConfigureFromExcel"/> will rearrange the
+        /// schedule to follow this sequence.
+        /// </summary>
+        public IList<int> GaSequence { get; set; }
 
         /// <inheritdoc />
         public void Configure(string[] sequence)
@@ -72,6 +81,79 @@ namespace UnitySimuLean
             // visual elements when available so that items can be observed in
             // the Unity scene. Fall back to headless execution otherwise.
             _source = new ScheduleSource("Source", _clock, null, dataDict, null, null)
+            {
+                vElement = SourceView ?? new NullVElement()
+            };
+            _sink = new Sink("Sink", _clock)
+            {
+                vElement = SinkView ?? new NullVElement()
+            };
+            GeneralLink.CreateLink(_source, new List<Element> { _sink });
+
+            // Reset metrics.
+            _delayCount = 0;
+            _inspectionCount = 0;
+        }
+
+        /// <summary>
+        /// Configures the simulation using a production schedule stored in an
+        /// Excel file. The schedule is loaded through <see cref="ExcelScheduleLoader"/>
+        /// and converted into the dictionary expected by <see cref="ScheduleSource"/>.
+        /// When <see cref="GaSequence"/> is provided, the rows read from the
+        /// spreadsheet are reordered accordingly before creating the source.
+        /// </summary>
+        /// <param name="path">Path to the Excel file containing the schedule.</param>
+        public void ConfigureFromExcel(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            // Reset previous model state.
+            _clock.Reset();
+            Element.GetElements().Clear();
+
+            // Load schedule from the Excel file.
+            var (orderedRefs, attributes) = ExcelScheduleLoader.LoadSchedule(path);
+
+            // Reorder using GA sequence if one has been supplied.
+            if (GaSequence != null && GaSequence.Count == orderedRefs.Count)
+            {
+                var reordered = new List<string>();
+                foreach (int idx in GaSequence)
+                {
+                    if (idx >= 0 && idx < orderedRefs.Count)
+                    {
+                        reordered.Add(orderedRefs[idx]);
+                    }
+                }
+                orderedRefs = reordered;
+            }
+
+            // Build the data dictionary with all columns.
+            var dataDict = new Dictionary<string, List<string>>
+            {
+                {"Time", new List<string>()},
+                {"Name", new List<string>()},
+                {"Q", new List<string>()},
+                {"type", new List<string>()},
+                {"Priority", new List<string>()}
+            };
+
+            foreach (var name in orderedRefs)
+            {
+                var entry = attributes[name];
+                dataDict["Time"].Add(entry.Time.ToString(CultureInfo.InvariantCulture));
+                dataDict["Name"].Add(name);
+                dataDict["Q"].Add(entry.Quantity.ToString(CultureInfo.InvariantCulture));
+                dataDict["type"].Add(entry.Type ?? string.Empty);
+                dataDict["Priority"].Add(entry.Priority.ToString(CultureInfo.InvariantCulture));
+            }
+
+            // Rebuild source and sink using the loaded schedule. Use autoSort=false
+            // to preserve the provided ordering (e.g., from a GA).
+            _source = new ScheduleSource("Source", _clock, null, dataDict, null, null, autoSort: false)
             {
                 vElement = SourceView ?? new NullVElement()
             };
