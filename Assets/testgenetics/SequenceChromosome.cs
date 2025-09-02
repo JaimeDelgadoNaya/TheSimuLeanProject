@@ -68,12 +68,17 @@ namespace UnitySimuLean
         }
 
         /// <summary>
-        /// Creates a new instance of the chromosome with the same length.
+        /// Creates a new instance of the chromosome preserving the mapping
+        /// between sequence indexes and part identifiers.
         /// </summary>
-        /// <returns>A new SequenceChromosome.</returns>
+        /// <returns>A new <see cref="SequenceChromosome"/> with a fresh random
+        /// sequence but referencing the same part identifiers.</returns>
         public override IChromosome CreateNew()
         {
-            return new SequenceChromosome(Length);
+            // Use the original list of part identifiers instead of numeric
+            // placeholders to ensure evolved chromosomes can be translated
+            // back into valid schedule references.
+            return new SequenceChromosome(idByIndex);
         }
 
         /// <summary>
