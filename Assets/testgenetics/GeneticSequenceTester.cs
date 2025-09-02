@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -128,9 +129,20 @@ namespace UnitySimuLean
             var logsPath = Path.Combine(Application.dataPath, "..", "Logs");
             Directory.CreateDirectory(logsPath);
             var csvPath = Path.Combine(logsPath, CsvFileName);
-            if (!File.Exists(csvPath))
+            const string header = "Sequence,DelayCount,InspectionCount";
+            if (!File.Exists(csvPath) || new FileInfo(csvPath).Length == 0)
             {
-                File.WriteAllText(csvPath, "Sequence,DelayCount,InspectionCount\n");
+                File.WriteAllText(csvPath, header + "\n");
+            }
+            else
+            {
+                var firstLine = File.ReadLines(csvPath).FirstOrDefault();
+                if (firstLine != header)
+                {
+                    var existingLines = File.ReadAllLines(csvPath);
+                    existingLines[0] = header;
+                    File.WriteAllLines(csvPath, existingLines);
+                }
             }
 
             var sequenceValue = string.Join(",", sequence);
