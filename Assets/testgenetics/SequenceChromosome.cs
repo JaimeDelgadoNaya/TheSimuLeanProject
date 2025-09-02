@@ -68,12 +68,15 @@ namespace UnitySimuLean
         }
 
         /// <summary>
-        /// Creates a new instance of the chromosome with the same length.
+        /// Creates a new instance of the chromosome preserving the same set
+        /// of part identifiers. This ensures that chromosomes produced by the
+        /// genetic algorithm always reference valid parts from the original
+        /// schedule.
         /// </summary>
-        /// <returns>A new SequenceChromosome.</returns>
+        /// <returns>A new SequenceChromosome initialized with the original part identifiers.</returns>
         public override IChromosome CreateNew()
         {
-            return new SequenceChromosome(Length);
+            return new SequenceChromosome(idByIndex);
         }
 
         /// <summary>
