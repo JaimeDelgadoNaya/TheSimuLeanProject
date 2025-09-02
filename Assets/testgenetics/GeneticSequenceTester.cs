@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -131,11 +132,12 @@ namespace UnitySimuLean
             var csvPath = Path.Combine(logsPath, CsvFileName);
             if (!File.Exists(csvPath))
             {
-                File.WriteAllText(csvPath, "PriorityOrder,DelayCount,InspectionCount\n");
+                File.WriteAllText(csvPath, "PartSequence,PriorityOrder,DelayCount,InspectionCount\n");
             }
 
-            var sequenceValue = string.Join(",", sequence);
-            var line = $"\"{sequenceValue}\",{delayCount},{inspectionCount}\n";
+            var partSequence = string.Join(",", sequence);
+            var priorities = string.Join(",", Enumerable.Range(1, sequence.Length));
+            var line = $"\"{partSequence}\",\"{priorities}\",{delayCount},{inspectionCount}\n";
             File.AppendAllText(csvPath, line);
             Debug.Log($"Results written to {csvPath}");
         }

@@ -112,7 +112,11 @@ namespace UnitySimuLean
                     double.TryParse(dueDateStr, out double dueDate);
                     int.TryParse(priorityStr, out int priority);
 
-                    attributes[referencia] = new ScheduleEntry
+                    // Use the row "Name" as the unique key so that duplicate
+                    // references are preserved. The original "Referencia" is
+                    // still stored inside the entry for downstream lookups.
+                    var key = name;
+                    attributes[key] = new ScheduleEntry
                     {
                         Time = time,
                         Name = name,
@@ -129,7 +133,7 @@ namespace UnitySimuLean
                 }
             }
 
-            // Order references by time then by priority
+            // Order entries by time then by priority
             var ordered = new List<KeyValuePair<string, ScheduleEntry>>(attributes);
             ordered.Sort((a, b) =>
             {
