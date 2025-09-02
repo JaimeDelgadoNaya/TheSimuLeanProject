@@ -114,8 +114,12 @@ namespace UnitySimuLean
             }
 
             var bestSequence = bestChromosome.GetSequence();
-            var bestFitness = bestChromosome.Fitness ?? 0;
-            var (delayCount, inspectionCount) = fitness.GetMetrics(bestChromosome);
+
+            // Re-evaluate the best chromosome to ensure metrics are available even if
+            // GeneticSharp cloned the chromosome during evolution, which would prevent
+            // the cached metrics from being retrieved correctly.
+            var (bestFitness, delayCount, inspectionCount) =
+                fitness.EvaluateWithMetrics(bestChromosome);
 
             Debug.Log(
                 $"Best sequence found: {string.Join(",", bestSequence)} " +
