@@ -73,7 +73,14 @@ namespace UnitySimuLean
         /// <returns>A new SequenceChromosome.</returns>
         public override IChromosome CreateNew()
         {
-            return new SequenceChromosome(Length);
+            // Preserve the original part identifiers when creating
+            // a new chromosome so that subsequent generations
+            // continue to reference valid schedule entries instead
+            // of falling back to numeric identifiers ("0", "1", ...).
+            // Using the existing idByIndex array ensures that the
+            // mapping between gene indices and part references is
+            // maintained across generations.
+            return new SequenceChromosome(idByIndex);
         }
 
         /// <summary>
