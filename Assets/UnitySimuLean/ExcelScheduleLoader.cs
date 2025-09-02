@@ -45,7 +45,14 @@ namespace UnitySimuLean
                     string header = table.Rows[0][col]?.ToString();
                     if (!string.IsNullOrEmpty(header))
                     {
-                        columnIndex[header.Trim()] = col;
+                        string headerKey = header.Trim();
+                        columnIndex[headerKey] = col;
+
+                        // Support plural header "priorities" by also mapping it to "Priority"
+                        if (headerKey.Equals("priorities", StringComparison.OrdinalIgnoreCase))
+                        {
+                            columnIndex["Priority"] = col;
+                        }
                     }
                 }
 
@@ -60,7 +67,12 @@ namespace UnitySimuLean
                     string timeStr = table.Rows[row][columnIndex["Time"]]?.ToString();
                     string quantityStr = table.Rows[row][columnIndex["Q"]]?.ToString();
                     string type = columnIndex.ContainsKey("type") ? table.Rows[row][columnIndex["type"]]?.ToString() : null;
-                    string priorityStr = table.Rows[row][columnIndex["Priority"]]?.ToString();
+
+                    string priorityStr = null;
+                    if (columnIndex.TryGetValue("Priority", out int priorityCol))
+                    {
+                        priorityStr = table.Rows[row][priorityCol]?.ToString();
+                    }
 
                     double.TryParse(timeStr, out double time);
                     int.TryParse(quantityStr, out int quantity);
