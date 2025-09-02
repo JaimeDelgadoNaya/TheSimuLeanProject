@@ -190,7 +190,6 @@ namespace SimuLean
                 {
                     completedItems++;
                     receivingItems = true;
-                    newItem = CreateNewItem();
 
                     theProcess = idleProccesses.Dequeue();
 
@@ -198,6 +197,12 @@ namespace SimuLean
                     {
                         items = inputs[i].Release(requirements[i]);
 
+                        // Use first input as the source for labels when creating the new item
+                        if (i == 0)
+                        {
+                            Item sourceItem = items.Count > 0 ? items.Peek() : null;
+                            newItem = CreateNewItem(sourceItem);
+                        }
 
                         foreach (Item it in items)
                         {
@@ -237,12 +242,18 @@ namespace SimuLean
             }
         }
 
-        Item CreateNewItem()
+        Item CreateNewItem(Item sourceItem = null)
         {
             Item newItem = new Item(simClock.GetSimulationTime());
             newItem.SetId("type", 1, 1);
 
             newItem.vItem = vElement.GenerateItem(0);
+
+            // Preserve labels such as DueDate from the original item when provided
+            if (sourceItem != null)
+            {
+                newItem.CopyLabelsFrom(sourceItem);
+            }
 
             return newItem;
         }

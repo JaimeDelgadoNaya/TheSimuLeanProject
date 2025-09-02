@@ -302,8 +302,10 @@ namespace SimuLean
             UnityCombiner uc = vElement as UnityCombiner;
             if (uc != null && uc.visualMode == VisualMode.NewItem)
             {
-                // 1. Crear el nuevo ítem combinado usando CreateNewItem().
-                Item newItem = CreateNewItem();
+                // 1. Crear el nuevo ítem combinado usando CreateNewItem()
+                //    copiando las etiquetas del ítem original para preservar
+                //    información como el DueDate.
+                Item newItem = CreateNewItem(process.theItem);
                 GameObject newCombinedItem = newItem.vItem as GameObject;
                 if (newCombinedItem != null)
                 {
