@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace UnitySimuLean
 {
@@ -8,6 +9,11 @@ namespace UnitySimuLean
         [SerializeField] private UnitySink sink;
 
         private readonly UnitySimulationRunner runner = new UnitySimulationRunner();
+
+        public void LoadSchedule(Dictionary<string, ScheduleEntry> schedule)
+        {
+            runner.LoadSchedule(schedule);
+        }
 
         public void Configure(string[] sequence)
         {

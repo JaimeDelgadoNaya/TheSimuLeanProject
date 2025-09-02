@@ -18,6 +18,7 @@ namespace UnitySimuLean
         private readonly SimClock _clock = new SimClock();
         private ScheduleSource _source;
         private Sink _sink;
+        private Dictionary<string, ScheduleEntry> _baseSchedule;
 
         /// <summary>
         /// Optional visual representation for the initial <see cref="ScheduleSource"/>.
@@ -37,41 +38,86 @@ namespace UnitySimuLean
         private int _inspectionCount;
 
         /// <inheritdoc />
+        public void LoadSchedule(Dictionary<string, ScheduleEntry> schedule)
+        {
+            _baseSchedule = schedule ?? throw new ArgumentNullException(nameof(schedule));
+        }
+
+        /// <inheritdoc />
         public void Configure(string[] sequence)
         {
             if (sequence == null)
             {
                 throw new ArgumentNullException(nameof(sequence));
             }
+            if (_baseSchedule == null)
+            {
+                throw new InvalidOperationException("Schedule must be loaded before configuring the runner.");
+            }
 
             // Reset previous model state.
             _clock.Reset();
             Element.GetElements().Clear();
 
-            // Build an in-memory schedule representing the provided sequence.
+            // Build an in-memory schedule using the baseline schedule and the
+            // provided priority order.
             var dataDict = new Dictionary<string, List<string>>
             {
                 {"Time", new List<string>()},
                 {"Name", new List<string>()},
                 {"Q", new List<string>()},
-                {"type", new List<string>()}
+                {"nRefuerzos", new List<string>()},
+                {"Referencia", new List<string>()},
+                {"tSoldadura", new List<string>()},
+                {"tInspeccion", new List<string>()},
+                {"inspeccionOn", new List<string>()},
+                {"DueDate", new List<string>()},
+                {"Priority", new List<string>()}
             };
 
-            foreach (var partId in sequence)
+            // Include type column only when present in the schedule.
+            bool includeType = false;
+            foreach (var entry in _baseSchedule.Values)
             {
-                // For simplicity all arrivals occur at time 0 with quantity 1 and
-                // a generic name. The important piece of information is the
-                // 'type' which represents the part identifier.
-                dataDict["Time"].Add("0");
-                dataDict["Name"].Add("Part");
-                dataDict["Q"].Add("1");
-                dataDict["type"].Add(partId);
+                if (!string.IsNullOrEmpty(entry.Type))
+                {
+                    includeType = true;
+                    break;
+                }
+            }
+            if (includeType)
+            {
+                dataDict["type"] = new List<string>();
+            }
+
+            for (int i = 0; i < sequence.Length; i++)
+            {
+                var refId = sequence[i];
+                if (!_baseSchedule.TryGetValue(refId, out var entry))
+                {
+                    throw new ArgumentException($"Unknown reference: {refId}", nameof(sequence));
+                }
+
+                dataDict["Time"].Add(entry.Time.ToString());
+                dataDict["Name"].Add(entry.Name);
+                dataDict["Q"].Add(entry.Quantity.ToString());
+                dataDict["nRefuerzos"].Add(entry.nRefuerzos.ToString());
+                dataDict["Referencia"].Add(entry.Referencia);
+                dataDict["tSoldadura"].Add(entry.tSoldadura.ToString());
+                dataDict["tInspeccion"].Add(entry.tInspeccion.ToString());
+                dataDict["inspeccionOn"].Add(entry.inspeccionOn.ToString());
+                dataDict["DueDate"].Add(entry.DueDate.ToString());
+                dataDict["Priority"].Add((i + 1).ToString());
+                if (includeType)
+                {
+                    dataDict["type"].Add(entry.Type);
+                }
             }
 
             // Rebuild source and sink with the new schedule. Attach provided
             // visual elements when available so that items can be observed in
             // the Unity scene. Fall back to headless execution otherwise.
-            _source = new ScheduleSource("Source", _clock, null, dataDict, null, null)
+            _source = new ScheduleSource("Source", _clock, null, dataDict, null, null, false)
             {
                 vElement = SourceView ?? new NullVElement()
             };

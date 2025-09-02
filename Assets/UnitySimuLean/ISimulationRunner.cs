@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace UnitySimuLean
 {
@@ -8,6 +9,13 @@ namespace UnitySimuLean
     /// </summary>
     public interface ISimulationRunner
     {
+        /// <summary>
+        /// Loads the baseline schedule that will be used as a template for
+        /// subsequent configurations.
+        /// </summary>
+        /// <param name="schedule">Dictionary of schedule entries keyed by reference.</param>
+        void LoadSchedule(Dictionary<string, ScheduleEntry> schedule);
+
         /// <summary>
         /// Configures the underlying simulation with the provided sequence of
         /// part identifiers. Implementations should reset any previous state

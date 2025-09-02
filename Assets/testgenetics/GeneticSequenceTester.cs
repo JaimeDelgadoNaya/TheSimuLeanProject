@@ -22,11 +22,12 @@ namespace UnitySimuLean
         [SerializeField]
         private bool headlessMode = false;
 
-        [Header("Genetic Algorithm Parameters")]
-        [Tooltip("Number of parts in the sequence.")]
-        [Min(1)]
+        [Header("Input Schedule")]
+        [Tooltip("Path to the schedule file used for optimization.")]
         [SerializeField]
-        private int numberOfParts = 10;
+        private string scheduleFilePath;
+
+        [Header("Genetic Algorithm Parameters")]
         [Tooltip("Number of generations to evolve.")]
         [Min(1)]
         [SerializeField]
@@ -83,7 +84,7 @@ namespace UnitySimuLean
                 return;
             }
 
-            var nParts = settings != null ? settings.numberOfParts : numberOfParts;
+            var schedulePath = settings != null ? settings.scheduleFilePath : scheduleFilePath;
             var gens = settings != null ? settings.generations : generations;
             var popSize = settings != null ? settings.populationSize : populationSize;
             var selType = settings != null ? settings.selectionType : selectionType;
@@ -92,7 +93,7 @@ namespace UnitySimuLean
 
             var result = SequenceOptimizer.OptimizePartSequence(
                 simulationRunner,
-                nParts,
+                schedulePath,
                 gens,
                 popSize,
                 selType,
@@ -130,7 +131,7 @@ namespace UnitySimuLean
             var csvPath = Path.Combine(logsPath, CsvFileName);
             if (!File.Exists(csvPath))
             {
-                File.WriteAllText(csvPath, "Sequence,DelayCount,InspectionCount\n");
+                File.WriteAllText(csvPath, "PriorityOrder,DelayCount,InspectionCount\n");
             }
 
             var sequenceValue = string.Join(",", sequence);

@@ -8,21 +8,26 @@ namespace UnitySimuLean
 {
     /// <summary>
     /// Utility to read production schedules from an Excel file.
-    /// Expected Excel format:
-    /// Time | Name | Q | type | Priority
-    /// Each row after the header represents a schedule entry.
+    /// Expected Excel format includes at least the following columns:
+    /// Time | Name | Q | nRefuerzos | Referencia | tSoldadura | tInspeccion |
+    /// inspeccionOn | DueDate | Priority
+    ///
+    /// Additional columns are ignored. Each row after the header represents
+    /// a schedule entry.
     /// </summary>
     public static class ExcelScheduleLoader
     {
         /// <summary>
-        /// Loads a schedule from the given Excel file.
-        /// The method returns an ordered list of references and
-        /// a dictionary with the attributes for each reference.
+        /// Loads a schedule from the given Excel file. The method returns an
+        /// ordered list of references and a dictionary with the attributes for
+        /// each reference.
         /// </summary>
         /// <param name="filePath">Path to the Excel file.</param>
         /// <returns>
         /// orderedRefs: References ordered by time and priority.
-        /// attributes: Map of reference to its attributes (time, quantity, type, priority).
+        /// attributes: Map of reference to its attributes (time, quantity,
+        /// nRefuerzos, tSoldadura, tInspeccion, inspeccionOn, DueDate,
+        /// priority, etc.).
         /// </returns>
         public static (List<string> orderedRefs, Dictionary<string, ScheduleEntry> attributes) LoadSchedule(string filePath)
         {
@@ -61,12 +66,36 @@ namespace UnitySimuLean
                 {
                     if (table.Rows[row] == null) continue;
 
+                    string referencia = null;
+                    if (columnIndex.TryGetValue("Referencia", out int referenciaCol))
+                    {
+                        referencia = table.Rows[row][referenciaCol]?.ToString();
+                    }
+
+                    // If no explicit reference is provided fall back to Name.
                     string name = table.Rows[row][columnIndex["Name"]]?.ToString();
                     if (string.IsNullOrWhiteSpace(name)) continue;
+                    if (string.IsNullOrWhiteSpace(referencia)) referencia = name;
 
                     string timeStr = table.Rows[row][columnIndex["Time"]]?.ToString();
                     string quantityStr = table.Rows[row][columnIndex["Q"]]?.ToString();
                     string type = columnIndex.ContainsKey("type") ? table.Rows[row][columnIndex["type"]]?.ToString() : null;
+
+                    string nRefuerzosStr = columnIndex.ContainsKey("nRefuerzos")
+                        ? table.Rows[row][columnIndex["nRefuerzos"]]?.ToString()
+                        : null;
+                    string tSoldaduraStr = columnIndex.ContainsKey("tSoldadura")
+                        ? table.Rows[row][columnIndex["tSoldadura"]]?.ToString()
+                        : null;
+                    string tInspeccionStr = columnIndex.ContainsKey("tInspeccion")
+                        ? table.Rows[row][columnIndex["tInspeccion"]]?.ToString()
+                        : null;
+                    string inspeccionOnStr = columnIndex.ContainsKey("inspeccionOn")
+                        ? table.Rows[row][columnIndex["inspeccionOn"]]?.ToString()
+                        : null;
+                    string dueDateStr = columnIndex.ContainsKey("DueDate")
+                        ? table.Rows[row][columnIndex["DueDate"]]?.ToString()
+                        : null;
 
                     string priorityStr = null;
                     if (columnIndex.TryGetValue("Priority", out int priorityCol))
@@ -76,13 +105,25 @@ namespace UnitySimuLean
 
                     double.TryParse(timeStr, out double time);
                     int.TryParse(quantityStr, out int quantity);
+                    int.TryParse(nRefuerzosStr, out int nRefuerzos);
+                    double.TryParse(tSoldaduraStr, out double tSoldadura);
+                    double.TryParse(tInspeccionStr, out double tInspeccion);
+                    int.TryParse(inspeccionOnStr, out int inspeccionOn);
+                    double.TryParse(dueDateStr, out double dueDate);
                     int.TryParse(priorityStr, out int priority);
 
-                    attributes[name] = new ScheduleEntry
+                    attributes[referencia] = new ScheduleEntry
                     {
                         Time = time,
+                        Name = name,
                         Quantity = quantity,
                         Type = type,
+                        nRefuerzos = nRefuerzos,
+                        Referencia = referencia,
+                        tSoldadura = tSoldadura,
+                        tInspeccion = tInspeccion,
+                        inspeccionOn = inspeccionOn,
+                        DueDate = dueDate,
                         Priority = priority
                     };
                 }
@@ -112,8 +153,15 @@ namespace UnitySimuLean
     public class ScheduleEntry
     {
         public double Time { get; set; }
+        public string Name { get; set; }
         public int Quantity { get; set; }
         public string Type { get; set; }
+        public int nRefuerzos { get; set; }
+        public string Referencia { get; set; }
+        public double tSoldadura { get; set; }
+        public double tInspeccion { get; set; }
+        public int inspeccionOn { get; set; }
+        public double DueDate { get; set; }
         public int Priority { get; set; }
     }
 }

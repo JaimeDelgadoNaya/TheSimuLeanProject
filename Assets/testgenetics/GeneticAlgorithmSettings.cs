@@ -5,10 +5,11 @@ namespace UnitySimuLean
     [CreateAssetMenu(fileName = "GeneticAlgorithmSettings", menuName = "SimuLean/Genetic Algorithm Settings")]
     public class GeneticAlgorithmSettings : ScriptableObject
     {
+        [Header("Input Schedule")]
+        [Tooltip("Path to the schedule file used for optimization.")]
+        public string scheduleFilePath;
+
         [Header("Genetic Algorithm Parameters")]
-        [Tooltip("Number of parts in the sequence.")]
-        [Min(1)]
-        public int numberOfParts = 10;
 
         [Tooltip("Number of generations to evolve.")]
         [Min(1)]
