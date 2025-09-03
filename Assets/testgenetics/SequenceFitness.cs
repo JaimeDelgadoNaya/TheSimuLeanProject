@@ -74,12 +74,19 @@ namespace UnitySimuLean
             // Store metrics for later retrieval.
             _metrics[chromosome] = (delayCount, inspectionCount);
 
-            // 4. Compute a fitness score favouring more inspections and fewer delays.
-            double fitness = (inspectionCount * 1) - (delayCount * 100);
-            // Guard against non-positive scores to keep optimization stable.
-            if (fitness <= 0)
+            // 4. Compute a fitness score that requires zero delays.
+            double fitness;
+            if (delayCount > 0)
             {
                 fitness = 1e-6;
+            }
+            else
+            {
+                fitness = inspectionCount * 1.0;
+                if (fitness <= 0)
+                {
+                    fitness = 1e-6;
+                }
             }
 
             return (fitness, delayCount, inspectionCount);

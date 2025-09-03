@@ -40,11 +40,18 @@ namespace ChapasGA.GA
                 if (doInspect) inspections++;
                 if (C > chapa.DueDate) delays++;
             }
-            double fitness = (inspections * 1.0) - (delays * 100.0);
-            // Ensure a positive fitness so the GA always receives non-negative scores.
-            if (fitness <= 0)
+            double fitness;
+            if (delays > 0)
             {
                 fitness = 1e-6;
+            }
+            else
+            {
+                fitness = inspections * 1.0;
+                if (fitness <= 0)
+                {
+                    fitness = 1e-6;
+                }
             }
             return (fitness, inspections, delays, completionTimes);
         }
