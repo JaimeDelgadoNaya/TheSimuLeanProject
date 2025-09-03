@@ -45,6 +45,19 @@ namespace ChapasGA.GA
             return GetGenes().Skip(LengthPerPart).Select(g => (int)g.Value).ToArray();
         }
 
+        public void SetOrder(int[] order)
+        {
+            if (order.Length != LengthPerPart)
+            {
+                throw new ArgumentException("Invalid order length");
+            }
+            for (int i = 0; i < LengthPerPart; i++)
+            {
+                ReplaceGene(i, new Gene(order[i]));
+            }
+            Repair();
+        }
+
         public void Repair()
         {
             // Repair permutation

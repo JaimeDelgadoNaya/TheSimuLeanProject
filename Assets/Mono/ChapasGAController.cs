@@ -11,10 +11,10 @@ namespace ChapasGA.Mono
     public class ChapasGAController : MonoBehaviour
     {
         [SerializeField] private string excelFileName = "Llegada_Chapas.xlsx";
-        [SerializeField] private int populationSize = 100;
-        [SerializeField] private int generations = 500;
+        [SerializeField] private int populationSize = 300;
+        [SerializeField] private int generations = 300;
         [SerializeField] private float crossoverProb = 0.9f;
-        [SerializeField] private float mutationProb = 0.15f;
+        [SerializeField] private float mutationProb = 0.25f;
         [SerializeField] private float elitismPercentage = 0.05f;
         [SerializeField] private bool dryRun = false;
         [SerializeField] private bool logToConsole = false;
