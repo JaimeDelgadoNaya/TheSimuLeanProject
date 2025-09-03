@@ -24,7 +24,7 @@ public static class ExcelReader
             var cell = headerRow.GetCell(c);
             if (cell != null)
             {
-                headers[cell.ToString().Trim()] = c;
+                headers[cell.ToString()!.Trim()] = c;
             }
         }
 
