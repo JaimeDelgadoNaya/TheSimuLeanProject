@@ -183,11 +183,7 @@ namespace ChapasGA.GA
                 }
                 C += proc;
             }
-            for (int i = 0; i < bits.Length; i++)
-            {
-                chromo.ReplaceGene(order.Length + i, new Gene(bits[i]));
-            }
-            chromo.Repair();
+            chromo.SetInspectionBits(bits);
         }
 
         private void TwoOpt(ChapaChromosome chromo, ChapaFitness fitness)

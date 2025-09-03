@@ -58,6 +58,20 @@ namespace ChapasGA.GA
             Repair();
         }
 
+        public void SetInspectionBits(int[] bits)
+        {
+            if (bits.Length != LengthPerPart)
+            {
+                throw new ArgumentException("Invalid bits length");
+            }
+            for (int i = 0; i < LengthPerPart; i++)
+            {
+                int val = _mandatory[i] == 1 ? 1 : bits[i];
+                ReplaceGene(LengthPerPart + i, new Gene(val));
+            }
+            Repair();
+        }
+
         public void Repair()
         {
             // Repair permutation
