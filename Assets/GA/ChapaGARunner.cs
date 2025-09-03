@@ -131,13 +131,13 @@ namespace ChapasGA.GA
 
         private int[] MooreHodgson(IList<Chapa> chapas)
         {
-            var jobs = chapas.Select((c, i) => new
-            {
-                Index = i,
-                Due = c.DueDate,
-                Proc = c.tSoldadura + (c.inspeccionOn == 1 ? c.tInspeccion : 0)
-            }).OrderBy(j => j.Due).ToList();
-            var schedule = new List<dynamic>();
+            // Represent each job as a strongly typed tuple to avoid dynamic conversions
+            var jobs = chapas
+                .Select((c, i) => (Index: i, Due: c.DueDate, Proc: c.tSoldadura + (c.inspeccionOn == 1 ? c.tInspeccion : 0)))
+                .OrderBy(j => j.Due)
+                .ToList();
+
+            var schedule = new List<(int Index, double Due, double Proc)>();
             double time = 0;
             foreach (var job in jobs)
             {
@@ -150,6 +150,7 @@ namespace ChapasGA.GA
                     time -= worst.Proc;
                 }
             }
+
             var late = jobs.Where(j => !schedule.Contains(j)).OrderBy(j => j.Due);
             return schedule.Concat(late).Select(j => j.Index).ToArray();
         }
