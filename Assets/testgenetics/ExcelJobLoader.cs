@@ -103,17 +103,5 @@ namespace UnitySimuLean
             return 0d;
         }
     }
-
-    /// <summary>
-    /// Represents a single job in the scheduling model.
-    /// </summary>
-    public class Job
-    {
-        public string Name;
-        public double tSoldadura;
-        public double tInspeccion;
-        public int inspeccionOn;
-        public double DueDate;
-    }
 }
 
