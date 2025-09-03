@@ -40,7 +40,8 @@ namespace ChapasGA.GA
                 if (doInspect) inspections++;
                 if (C > chapa.DueDate) delays++;
             }
-            double fitness = (inspections * 1.0) - (delays * 100.0);
+            // Prioritize zero delays; only count inspections when no delays occur.
+            double fitness = delays == 0 ? inspections : -(delays * 1000.0);
             return (fitness, inspections, delays, completionTimes);
         }
     }
