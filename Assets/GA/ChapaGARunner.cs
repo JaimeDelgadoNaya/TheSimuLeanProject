@@ -64,7 +64,9 @@ namespace ChapasGA.GA
                     foreach (var w in worst)
                     {
                         var idx = gen.Chromosomes.IndexOf(w);
-                        gen.Chromosomes[idx] = prototype.CreateNew();
+                        var fresh = prototype.CreateNew();
+                        fresh.Fitness = fitness.Evaluate(fresh);
+                        gen.Chromosomes[idx] = fresh;
                     }
                     ga.MutationProbability = 0.35f;
                     mutationBoost = 10;
@@ -209,6 +211,7 @@ namespace ChapasGA.GA
                     }
                 }
             }
+            chromo.Fitness = best;
         }
 
         private int[] TwoOptSwap(int[] order, int i, int j)
