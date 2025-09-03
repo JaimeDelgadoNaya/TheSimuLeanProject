@@ -78,7 +78,7 @@ namespace UnitySimuLean
             double fitness;
             if (delayCount > 0)
             {
-                fitness = 1e-6;
+                fitness = 0;
             }
             else
             {
