@@ -76,30 +76,12 @@ namespace SimuLean
                 inspeccionesRealizadas++;
             }
 
-            // Contar retraso si tiempoActual > Deadline/DueDate (ignorando mayúsculas)
-            double? labelDeadlineObj = theItem.GetLabelValue("Deadline") ?? theItem.GetLabelValue("DueDate");
-            if (labelDeadlineObj == null)
+            // Contar retraso si el ítem tiene un Deadline/DueDate y llega tarde.
+            double? labelDeadlineObj = theItem.GetLabelValueIgnoreCase("Deadline")
+                                     ?? theItem.GetLabelValueIgnoreCase("DueDate");
+            if (labelDeadlineObj.HasValue && tiempoActual > labelDeadlineObj.Value)
             {
-                foreach (KeyValuePair<string, object> kvp in theItem.GetAllLabels())
-                {
-                    if (kvp.Key.Equals("Deadline", StringComparison.OrdinalIgnoreCase) ||
-                        kvp.Key.Equals("DueDate", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (kvp.Value is double d)
-                        {
-                            labelDeadlineObj = d;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (labelDeadlineObj != null)
-            {
-                double tDeadline = labelDeadlineObj.Value;
-                if (tiempoActual > tDeadline)
-                {
-                    retrasados++;
-                }
+                retrasados++;
             }
 
             vElement.LoadItem(theItem);

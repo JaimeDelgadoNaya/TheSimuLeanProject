@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 
@@ -140,6 +141,30 @@ namespace SimuLean
             {
                 return attribDouble[label];
             }
+            return null;
+        }
+
+        /// <summary>
+        /// Retrieves the value of a label using a case-insensitive comparison.
+        /// Returns <c>null</c> when the label is not found.
+        /// </summary>
+        /// <param name="label">Label name to search for.</param>
+        /// <returns>The value associated with the label or <c>null</c>.</returns>
+        public double? GetLabelValueIgnoreCase(string label)
+        {
+            if (attribDouble == null || string.IsNullOrEmpty(label))
+            {
+                return null;
+            }
+
+            foreach (var kvp in attribDouble)
+            {
+                if (kvp.Key.Equals(label, StringComparison.OrdinalIgnoreCase))
+                {
+                    return kvp.Value;
+                }
+            }
+
             return null;
         }
 
