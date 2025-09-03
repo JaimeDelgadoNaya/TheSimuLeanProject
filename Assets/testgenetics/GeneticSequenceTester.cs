@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -86,6 +87,10 @@ namespace UnitySimuLean
             var nParts = settings != null ? settings.numberOfParts : numberOfParts;
             var gens = settings != null ? settings.generations : generations;
             var popSize = settings != null ? settings.populationSize : populationSize;
+            // GeneticSharp requires at least two chromosomes per generation.
+            // Clamp the population size to the minimum allowed value to avoid
+            // runtime exceptions when misconfigured.
+            popSize = Math.Max(2, popSize);
             var selType = settings != null ? settings.selectionType : selectionType;
             var crossType = settings != null ? settings.crossoverType : crossoverType;
             var mutType = settings != null ? settings.mutationType : mutationType;

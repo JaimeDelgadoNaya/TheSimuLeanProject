@@ -15,7 +15,10 @@ namespace UnitySimuLean
         public int generations = 100;
 
         [Tooltip("Population size per generation.")]
-        [Min(1)]
+        // GeneticSharp requires at least two chromosomes per generation.
+        // Enforce a minimum of 2 to prevent runtime errors when configured
+        // through a ScriptableObject.
+        [Min(2)]
         public int populationSize = 50;
 
         [Header("Genetic Operators")]
