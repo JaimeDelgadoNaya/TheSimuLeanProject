@@ -76,6 +76,11 @@ namespace UnitySimuLean
 
             // 4. Compute a fitness score favouring more inspections and fewer delays.
             double fitness = (inspectionCount * 1) - (delayCount * 100);
+            // Guard against non-positive scores to keep optimization stable.
+            if (fitness <= 0)
+            {
+                fitness = 1e-6;
+            }
 
             return (fitness, delayCount, inspectionCount);
         }
