@@ -5,25 +5,33 @@ namespace UnitySimuLean
     /// </summary>
     public enum SelectionType
     {
-        Elite,
-        RouletteWheel
+        Tournament
     }
 
     /// <summary>
-    /// Crossover operators supported by the genetic algorithm.
+    /// Crossover operators for the permutation part of the chromosome.
     /// </summary>
-    public enum CrossoverType
+    public enum OrderCrossoverType
     {
-        Ordered,
+        PMX,
+        OX
+    }
+
+    /// <summary>
+    /// Crossover operators for the binary inspection part of the chromosome.
+    /// </summary>
+    public enum BitCrossoverType
+    {
+        Uniform,
         OnePoint
     }
 
     /// <summary>
-    /// Mutation operators supported by the genetic algorithm.
+    /// Mutation operators for the permutation part of the chromosome.
     /// </summary>
-    public enum MutationType
+    public enum OrderMutationType
     {
-        Twors,
-        ReverseSequence
+        Swap,
+        Twors
     }
 }
