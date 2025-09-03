@@ -1,6 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
+using ExcelDataReader;
 using SimuLean;
 
 namespace UnitySimuLean
@@ -18,6 +21,16 @@ namespace UnitySimuLean
         private readonly SimClock _clock = new SimClock();
         private ScheduleSource _source;
         private Sink _sink;
+
+        // Cached data read from the arrival Excel file. Each entry represents a row
+        // of the spreadsheet as a dictionary of column name to value.
+        private List<Dictionary<string, string>> _arrivalData;
+
+        /// <summary>
+        /// Path to the Excel file containing arrival information for the sheets.
+        /// Defaults to "Llegada_Chapas.xlsx" located at the application root.
+        /// </summary>
+        public string ArrivalExcelPath { get; set; } = "Llegada_Chapas.xlsx";
 
         /// <summary>
         /// Optional visual representation for the initial <see cref="ScheduleSource"/>.
@@ -48,24 +61,36 @@ namespace UnitySimuLean
             _clock.Reset();
             Element.GetElements().Clear();
 
-            // Build an in-memory schedule representing the provided sequence.
-            var dataDict = new Dictionary<string, List<string>>
+            // Ensure arrival data from Excel is loaded only once.
+            if (_arrivalData == null)
             {
-                {"Time", new List<string>()},
-                {"Name", new List<string>()},
-                {"Q", new List<string>()},
-                {"type", new List<string>()}
-            };
+                _arrivalData = LoadArrivalData();
+            }
 
+            // Prepare the dictionary that will hold the schedule for the
+            // configured sequence. Start by creating an entry for each column
+            // found in the Excel file so all labels are preserved.
+            var headers = new List<string>(_arrivalData[0].Keys);
+            var dataDict = new Dictionary<string, List<string>>();
+            foreach (var h in headers)
+            {
+                dataDict[h] = new List<string>();
+            }
+
+            // Populate the schedule using the provided sequence. Each partId is
+            // interpreted as the zero-based index of the row in the Excel file.
             foreach (var partId in sequence)
             {
-                // For simplicity all arrivals occur at time 0 with quantity 1 and
-                // a generic name. The important piece of information is the
-                // 'type' which represents the part identifier.
-                dataDict["Time"].Add("0");
-                dataDict["Name"].Add("Part");
-                dataDict["Q"].Add("1");
-                dataDict["type"].Add(partId);
+                if (!int.TryParse(partId, out int idx) || idx < 0 || idx >= _arrivalData.Count)
+                {
+                    throw new ArgumentException($"Invalid part identifier: {partId}");
+                }
+
+                var row = _arrivalData[idx];
+                foreach (var h in headers)
+                {
+                    dataDict[h].Add(row.ContainsKey(h) ? row[h] : "");
+                }
             }
 
             // Rebuild source and sink with the new schedule. Attach provided
@@ -81,9 +106,62 @@ namespace UnitySimuLean
             };
             GeneralLink.CreateLink(_source, new List<Element> { _sink });
 
+            // Inform the sink of the expected number of items so it can compute
+            // overall timing when all have been processed.
+            _sink.expectedItems = sequence.Length;
+
             // Reset metrics.
             _delayCount = 0;
             _inspectionCount = 0;
+        }
+
+        /// <summary>
+        /// Loads the arrival data from the Excel file into memory.
+        /// </summary>
+        private List<Dictionary<string, string>> LoadArrivalData()
+        {
+            var rows = new List<Dictionary<string, string>>();
+
+            var path = ArrivalExcelPath;
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException("Arrival Excel file not found", path);
+            }
+
+            // ExcelDataReader requires registering the code pages provider for
+            // non UTF encodings.
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            using (var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var reader = ExcelReaderFactory.CreateReader(stream))
+            {
+                var result = reader.AsDataSet();
+                var table = result.Tables[0];
+
+                if (table.Rows.Count == 0)
+                {
+                    return rows;
+                }
+
+                int colCount = table.Columns.Count;
+                var headers = new string[colCount];
+                for (int c = 0; c < colCount; c++)
+                {
+                    headers[c] = table.Rows[0][c]?.ToString() ?? string.Empty;
+                }
+
+                for (int r = 1; r < table.Rows.Count; r++)
+                {
+                    var dict = new Dictionary<string, string>();
+                    for (int c = 0; c < colCount; c++)
+                    {
+                        dict[headers[c]] = table.Rows[r][c]?.ToString() ?? string.Empty;
+                    }
+                    rows.Add(dict);
+                }
+            }
+
+            return rows;
         }
 
         /// <inheritdoc />
