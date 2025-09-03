@@ -81,10 +81,22 @@ namespace UnitySimuLean
             // Store metrics for later retrieval.
             _metrics[chromosome] = (delayCount, inspectionCount);
 
-            // 4. Compute a fitness score. Any change in inspection count is heavily penalised.
-            double fitness = inspectionCount == _requiredInspectionCount
-                ? -delayCount
-                : double.MinValue;
+            // 4. Compute a fitness score. Genetic algorithms such as GeneticSharp
+            // expect fitness values to be non‑negative when using roulette wheel
+            // selection. Transform the delay count into a positive score and assign
+            // a tiny positive value to sequences that do not match the required
+            // inspection count so the selection operator can still function.
+            double fitness;
+            if (inspectionCount == _requiredInspectionCount)
+            {
+                // Lower delay counts should yield higher fitness values.
+                fitness = 1.0 / (1 + delayCount);
+            }
+            else
+            {
+                // Heavy penalty for sequences that change the inspection count.
+                fitness = 1e-6;
+            }
 
             return (fitness, delayCount, inspectionCount);
         }
