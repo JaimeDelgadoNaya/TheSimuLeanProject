@@ -45,17 +45,8 @@ namespace UnitySimuLean
             // runtime exceptions when a smaller value is provided.
             populationSize = Math.Max(2, populationSize);
 
-            // Run a baseline simulation to determine the required number of inspections.
-            var baselineSequence = new string[numberOfParts];
-            for (int i = 0; i < numberOfParts; i++)
-            {
-                baselineSequence[i] = i.ToString();
-            }
-            runner.Configure(baselineSequence);
-            runner.Run();
-            var requiredInspectionCount = runner.InspectionCount;
-
-            var fitness = new SequenceFitness(runner, requiredInspectionCount);
+            // Configure the fitness function to reward inspections and penalize delays.
+            var fitness = new SequenceFitness(runner);
             var chromosome = new SequenceChromosome(numberOfParts);
             var population = new Population(populationSize, populationSize * 2, chromosome);
             ISelection selection;
