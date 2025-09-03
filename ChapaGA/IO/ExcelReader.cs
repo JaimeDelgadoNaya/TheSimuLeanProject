@@ -14,7 +14,7 @@ public static class ExcelReader
         }
 
         using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        IWorkbook workbook = new XSSFWorkbook(fs);
+        using var workbook = new XSSFWorkbook(fs);
         ISheet sheet = workbook.GetSheetAt(0);
 
         var headerRow = sheet.GetRow(0) ?? throw new Exception("Missing header row.");
@@ -45,19 +45,33 @@ public static class ExcelReader
         {
             var row = sheet.GetRow(r);
             if (row == null) continue;
-            var name = row.GetCell(headers["Name"])?.ToString();
+            var name = row.GetCell(headers["Name"], MissingCellPolicy.RETURN_BLANK_AS_NULL)?.ToString();
             if (string.IsNullOrWhiteSpace(name)) continue;
+            double tSoldadura = GetNumericCell(row, headers["tSoldadura"], "tSoldadura", r + 1);
+            double tInspeccion = GetNumericCell(row, headers["tInspeccion"], "tInspeccion", r + 1);
+            bool inspeccionOn = GetNumericCell(row, headers["inspeccionOn"], "inspeccionOn", r + 1) == 1;
+            double dueDate = GetNumericCell(row, headers["DueDate"], "DueDate", r + 1);
             var chapa = new Chapa
             {
-                Name = name,
-                TSoldadura = row.GetCell(headers["tSoldadura"]).NumericCellValue,
-                TInspeccion = row.GetCell(headers["tInspeccion"]).NumericCellValue,
-                InspeccionObligatoria = row.GetCell(headers["inspeccionOn"]).NumericCellValue == 1,
-                DueDate = row.GetCell(headers["DueDate"]).NumericCellValue
+                Name = name!,
+                TSoldadura = tSoldadura,
+                TInspeccion = tInspeccion,
+                InspeccionObligatoria = inspeccionOn,
+                DueDate = dueDate
             };
             list.Add(chapa);
         }
 
         return list;
+    }
+
+    private static double GetNumericCell(IRow row, int index, string column, int rowNumber)
+    {
+        var cell = row.GetCell(index, MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (cell == null || cell.CellType != CellType.Numeric)
+        {
+            throw new Exception($"Cell '{column}' at row {rowNumber} is not numeric or is missing.");
+        }
+        return cell.NumericCellValue;
     }
 }

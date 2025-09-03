@@ -13,6 +13,10 @@ public class ChapaMutation : IMutation
     {
         var c = (ChapaChromosome)chromosome;
         var rnd = RandomizationProvider.Current;
+        if (rnd.GetDouble() > probability)
+        {
+            return;
+        }
         int len = c.JobCount;
 
         // Swap two positions in order
