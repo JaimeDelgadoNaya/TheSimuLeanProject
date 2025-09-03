@@ -10,7 +10,8 @@ namespace ChapasGA.IO
 {
     public class ExcelChapaLoader
     {
-        private static readonly string[] RequiredHeaders = { "Name", "tSoldadura", "tInspeccion", "inspeccionOn", "DueDate" };
+        private static readonly string[] RequiredHeaders = { "Name", "tSoldadura", "inspeccionOn", "DueDate" };
+        private const string InspectionHeader = "tInspeccion";
 
         public List<Chapa> LoadFromStreamingAssets(string excelFileName)
         {
@@ -44,13 +45,29 @@ namespace ChapasGA.IO
 
             foreach (DataRow row in table.Rows)
             {
+                double tSold = Math.Max(0, Convert.ToDouble(row["tSoldadura"]));
+                double tIns = table.Columns.Contains(InspectionHeader) && row[InspectionHeader] != DBNull.Value
+                    ? Math.Max(0, Convert.ToDouble(row[InspectionHeader]))
+                    : 0;
+                int insOn = Convert.ToInt32(row["inspeccionOn"]);
+                object dueObj = table.Columns.Contains("DueDate") ? row["DueDate"] : null;
+                double due = 21600;
+                if (dueObj != null && dueObj != DBNull.Value)
+                {
+                    double parsedDue = Convert.ToDouble(dueObj);
+                    if (parsedDue > 0)
+                    {
+                        due = parsedDue;
+                    }
+                }
+
                 var chapa = new Chapa
                 {
                     Name = row["Name"].ToString(),
-                    tSoldadura = Convert.ToDouble(row["tSoldadura"]),
-                    tInspeccion = Convert.ToDouble(row["tInspeccion"]),
-                    inspeccionOn = Convert.ToInt32(row["inspeccionOn"]),
-                    DueDate = Convert.ToDouble(row["DueDate"])
+                    tSoldadura = tSold,
+                    tInspeccion = tIns,
+                    inspeccionOn = insOn,
+                    DueDate = due
                 };
                 result.Add(chapa);
             }

@@ -8,20 +8,22 @@ namespace ChapasGA.GA
     public class ChapaChromosome : ChromosomeBase
     {
         private readonly int[] _mandatory;
+        private readonly double _inspectProbability;
         public int LengthPerPart { get; }
 
-        public ChapaChromosome(int length, int[] mandatory)
+        public ChapaChromosome(int length, int[] mandatory, double inspectProbability = 0.5)
             : base(length * 2)
         {
             LengthPerPart = length;
             _mandatory = mandatory;
+            _inspectProbability = inspectProbability;
             CreateGenes();
             Repair();
         }
 
         public override IChromosome CreateNew()
         {
-            return new ChapaChromosome(LengthPerPart, _mandatory);
+            return new ChapaChromosome(LengthPerPart, _mandatory, _inspectProbability);
         }
 
         public override Gene GenerateGene(int geneIndex)
@@ -32,7 +34,11 @@ namespace ChapasGA.GA
                 return new Gene(rnd.GetInt(0, LengthPerPart));
             }
             var idx = geneIndex - LengthPerPart;
-            return new Gene(_mandatory[idx] == 1 ? 1 : rnd.GetInt(0, 2));
+            if (_mandatory[idx] == 1)
+            {
+                return new Gene(1);
+            }
+            return new Gene(rnd.GetDouble() < _inspectProbability ? 1 : 0);
         }
 
         public int[] GetOrder()

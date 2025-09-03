@@ -11,9 +11,9 @@ namespace ChapasGA.Mono
     public class ChapasGAController : MonoBehaviour
     {
         [SerializeField] private string excelFileName = "Llegada_Chapas.xlsx";
-        [SerializeField] private int populationSize = 100;
-        [SerializeField] private int generations = 500;
-        [SerializeField] private float crossoverProb = 0.9f;
+        [SerializeField] private int populationSize = 200;
+        [SerializeField] private int generations = 700;
+        [SerializeField] private float crossoverProb = 0.85f;
         [SerializeField] private float mutationProb = 0.15f;
         [SerializeField] private bool dryRun = false;
         [SerializeField] private bool logToConsole = false;
@@ -51,7 +51,9 @@ namespace ChapasGA.Mono
             {
                 int n = _chapas.Count;
                 var mandatory = _chapas.Select(c => c.inspeccionOn).ToArray();
-                var chromo = new ChapaChromosome(n, mandatory);
+                double baseTime = _chapas.Sum(c => c.tSoldadura + (c.inspeccionOn == 1 ? c.tInspeccion : 0));
+                double inspectProb = baseTime >= 0.9 * 21600 ? 0.1 : 0.5;
+                var chromo = new ChapaChromosome(n, mandatory, inspectProb);
                 for (int i = 0; i < n; i++)
                 {
                     chromo.ReplaceGene(i, new Gene(i));
@@ -68,7 +70,11 @@ namespace ChapasGA.Mono
             }
             else
             {
-                _runner.RunGA(_chapas, populationSize, generations, crossoverProb, mutationProb);
+                int pop = Mathf.Clamp(populationSize, 150, 300);
+                int gens = Mathf.Clamp(generations, 500, 1000);
+                float cross = Mathf.Clamp01(crossoverProb);
+                float mut = Mathf.Clamp(mutationProb, 0.10f, 0.20f);
+                _runner.RunGA(_chapas, pop, gens, cross, mut);
             }
 
             if (logToConsole)

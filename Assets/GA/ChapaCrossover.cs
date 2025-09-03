@@ -66,12 +66,13 @@ namespace ChapasGA.GA
                 child2.ReplaceGene(i, new Gene(c2[i]));
             }
 
-            // Uniform crossover for bits
+            // One-point crossover for inspection bits
             var b1 = p1.GetInspectionBits();
             var b2 = p2.GetInspectionBits();
+            int bitPoint = rnd.GetInt(0, size);
             for (int i = 0; i < size; i++)
             {
-                if (rnd.GetDouble() < 0.5)
+                if (i < bitPoint)
                 {
                     child1.ReplaceGene(size + i, new Gene(b1[i]));
                     child2.ReplaceGene(size + i, new Gene(b2[i]));
