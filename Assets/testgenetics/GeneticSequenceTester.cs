@@ -83,6 +83,13 @@ namespace UnitySimuLean
                 return;
             }
 
+            if (simulationRunner is UnitySimulationRunnerBehaviour usb)
+            {
+                // Load schedule so the number of parts can be derived from the Excel file.
+                usb.LoadSchedule();
+                numberOfParts = usb.PartCount;
+            }
+
             var nParts = settings != null ? settings.numberOfParts : numberOfParts;
             var gens = settings != null ? settings.generations : generations;
             var popSize = settings != null ? settings.populationSize : populationSize;

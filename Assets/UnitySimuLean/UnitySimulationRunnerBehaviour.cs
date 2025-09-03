@@ -13,6 +13,7 @@ namespace UnitySimuLean
         {
             runner.SourceView = source;
             runner.SinkView = sink;
+            runner.ScheduleFilePath = source != null ? source.fileName : null;
             runner.Configure(sequence);
         }
 
@@ -21,5 +22,9 @@ namespace UnitySimuLean
         public int DelayCount => runner.DelayCount;
 
         public int InspectionCount => runner.InspectionCount;
+
+        public void LoadSchedule() => runner.LoadSchedule();
+
+        public int PartCount => runner.PartCount;
     }
 }
