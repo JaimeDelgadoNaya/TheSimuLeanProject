@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using GeneticSharp.Domain.Chromosomes;
-using GeneticSharp.Infrastructure.Framework.Threading;
+using GeneticSharp.Domain.Randomizations;
 
 namespace ChapasGA.GA
 {

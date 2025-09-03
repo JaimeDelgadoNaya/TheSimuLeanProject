@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using GeneticSharp.Domain.Chromosomes;
 using GeneticSharp.Domain.Crossovers;
-using GeneticSharp.Infrastructure.Framework.Threading;
+using GeneticSharp.Domain.Randomizations;
 
 namespace ChapasGA.GA
 {
@@ -32,8 +32,11 @@ namespace ChapasGA.GA
             var o2 = p2.GetOrder();
             var c1 = new int[size];
             var c2 = new int[size];
-            Array.Fill(c1, -1);
-            Array.Fill(c2, -1);
+            for (int i = 0; i < size; i++)
+            {
+                c1[i] = -1;
+                c2[i] = -1;
+            }
             for (int i = cut1; i <= cut2; i++)
             {
                 c1[i] = o1[i];
