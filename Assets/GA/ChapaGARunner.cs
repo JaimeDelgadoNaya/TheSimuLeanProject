@@ -4,6 +4,7 @@ using ChapasGA.Models;
 using GeneticSharp.Domain;
 using GeneticSharp.Domain.Populations;
 using GeneticSharp.Domain.Selections;
+using GeneticSharp.Domain.Reinsertions;
 using GeneticSharp.Domain.Terminations;
 
 namespace ChapasGA.GA
@@ -31,6 +32,7 @@ namespace ChapasGA.GA
             {
                 CrossoverProbability = crossoverProb,
                 MutationProbability = mutationProb,
+                Reinsertion = new ElitistReinsertion(),
                 Termination = new GenerationNumberTermination(generations)
             };
 
