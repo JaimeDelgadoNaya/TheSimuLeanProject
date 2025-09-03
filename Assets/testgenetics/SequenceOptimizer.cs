@@ -105,8 +105,7 @@ namespace UnitySimuLean
             }
 
             var bestSequence = bestChromosome.GetSequence();
-            var bestFitness = bestChromosome.Fitness ?? 0;
-            var (delayCount, inspectionCount) = fitness.GetMetrics(bestChromosome);
+            var (bestFitness, delayCount, inspectionCount) = fitness.EvaluateWithMetrics(bestChromosome);
 
             Debug.Log(
                 $"Best sequence found: {string.Join(",", bestSequence)} " +

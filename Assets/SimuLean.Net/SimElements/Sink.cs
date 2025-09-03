@@ -69,9 +69,9 @@ namespace SimuLean
             double tiempoActual = simClock.GetSimulationTime();
             numberIterms++;
 
-            // Contar inspección si la etiqueta inspeccionOn == 1
-            var labelInspObj = theItem.GetLabelValue("inspeccionOn");
-            if (labelInspObj != null && labelInspObj.Value == 1)
+            // Contar inspección si la etiqueta inspeccionOn >= 1 (insensible a mayúsculas)
+            var labelInspObj = theItem.GetLabelValueIgnoreCase("inspeccionOn");
+            if (labelInspObj.HasValue && labelInspObj.Value >= 1)
             {
                 inspeccionesRealizadas++;
             }

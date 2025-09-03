@@ -1,7 +1,6 @@
 using System;
 using GeneticSharp.Domain.Chromosomes;
 using GeneticSharp.Domain.Fitnesses;
-using System.Collections.Generic;
 
 namespace UnitySimuLean
 {
@@ -14,8 +13,6 @@ namespace UnitySimuLean
     {
         private readonly ISimulationRunner _runner;
         private readonly int _requiredInspectionCount;
-        private readonly Dictionary<IChromosome, (int delay, int inspections)> _metrics =
-            new Dictionary<IChromosome, (int delay, int inspections)>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SequenceFitness"/> class.
@@ -78,35 +75,12 @@ namespace UnitySimuLean
             int delayCount = _runner.DelayCount;
             int inspectionCount = _runner.InspectionCount;
 
-            // Store metrics for later retrieval.
-            _metrics[chromosome] = (delayCount, inspectionCount);
-
             // 4. Compute a fitness score. Any change in inspection count is heavily penalised.
             double fitness = inspectionCount == _requiredInspectionCount
                 ? -delayCount
                 : double.MinValue;
 
             return (fitness, delayCount, inspectionCount);
-        }
-
-        /// <summary>
-        /// Gets the metrics collected for a previously evaluated chromosome.
-        /// </summary>
-        /// <param name="chromosome">Chromosome whose metrics are requested.</param>
-        /// <returns>The delay count and inspection count associated with the chromosome.</returns>
-        public (int delayCount, int inspectionCount) GetMetrics(IChromosome chromosome)
-        {
-            if (_metrics.TryGetValue(chromosome, out var metrics))
-            {
-                // Remove metrics from previous chromosomes to avoid uncontrolled
-                // growth of the dictionary. Retain only the metrics for the
-                // requested chromosome so they remain available if needed again.
-                _metrics.Clear();
-                _metrics[chromosome] = metrics;
-                return metrics;
-            }
-
-            return (0, 0);
         }
     }
 }
