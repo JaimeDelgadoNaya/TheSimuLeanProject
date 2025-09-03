@@ -16,7 +16,7 @@ namespace ChapasGA.IO
             {
                 int idx = order[i];
                 var c = chapas[idx];
-                bool doInspect = bits[idx] == 1 || c.inspeccionOn == 1;
+                bool doInspect = bits[idx] == 1;
                 double completion = completionTimes[i];
                 bool isLate = completion > c.DueDate;
                 sw.WriteLine($"{i};{c.Name};{(doInspect ? 1 : 0)};{completion};{c.DueDate};{(isLate ? 1 : 0)}");

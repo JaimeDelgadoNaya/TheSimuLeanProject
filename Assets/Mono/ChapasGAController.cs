@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using ChapasGA.GA;
 using ChapasGA.IO;
 using ChapasGA.Models;
@@ -50,8 +49,7 @@ namespace ChapasGA.Mono
             if (dryRun)
             {
                 int n = _chapas.Count;
-                var mandatory = _chapas.Select(c => c.inspeccionOn).ToArray();
-                var chromo = new ChapaChromosome(n, mandatory);
+                var chromo = new ChapaChromosome(n);
                 for (int i = 0; i < n; i++)
                 {
                     chromo.ReplaceGene(i, new Gene(i));

@@ -7,21 +7,19 @@ namespace ChapasGA.GA
 {
     public class ChapaChromosome : ChromosomeBase
     {
-        private readonly int[] _mandatory;
         public int LengthPerPart { get; }
 
-        public ChapaChromosome(int length, int[] mandatory)
+        public ChapaChromosome(int length)
             : base(length * 2)
         {
             LengthPerPart = length;
-            _mandatory = mandatory;
             CreateGenes();
             Repair();
         }
 
         public override IChromosome CreateNew()
         {
-            return new ChapaChromosome(LengthPerPart, _mandatory);
+            return new ChapaChromosome(LengthPerPart);
         }
 
         public override Gene GenerateGene(int geneIndex)
@@ -31,8 +29,7 @@ namespace ChapasGA.GA
             {
                 return new Gene(rnd.GetInt(0, LengthPerPart));
             }
-            var idx = geneIndex - LengthPerPart;
-            return new Gene(_mandatory[idx] == 1 ? 1 : rnd.GetInt(0, 2));
+            return new Gene(rnd.GetInt(0, 2));
         }
 
         public int[] GetOrder()
@@ -68,19 +65,6 @@ namespace ChapasGA.GA
             for (int i = 0; i < LengthPerPart; i++)
             {
                 ReplaceGene(i, new Gene(fixedOrder[i]));
-            }
-            // Repair bits
-            var bits = GetInspectionBits();
-            for (int i = 0; i < bits.Length; i++)
-            {
-                if (_mandatory[i] == 1)
-                {
-                    bits[i] = 1;
-                }
-            }
-            for (int i = 0; i < bits.Length; i++)
-            {
-                ReplaceGene(LengthPerPart + i, new Gene(bits[i]));
             }
         }
     }
