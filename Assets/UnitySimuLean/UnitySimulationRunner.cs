@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using ExcelDataReader;
 using SimuLean;
@@ -48,6 +49,11 @@ namespace UnitySimuLean
 
         private int _delayCount;
         private int _inspectionCount;
+
+        // Keep track of the last configured sequence so that metrics such as
+        // delays can be recomputed even when the minimal model (Source -> Sink)
+        // does not advance simulation time.
+        private string[] _currentSequence;
 
         /// <inheritdoc />
         public void Configure(string[] sequence)
@@ -110,9 +116,10 @@ namespace UnitySimuLean
             // overall timing when all have been processed.
             _sink.expectedItems = sequence.Length;
 
-            // Reset metrics.
+            // Reset metrics and keep the sequence for later evaluation.
             _delayCount = 0;
             _inspectionCount = 0;
+            _currentSequence = sequence;
         }
 
         /// <summary>
@@ -164,6 +171,60 @@ namespace UnitySimuLean
             return rows;
         }
 
+        /// <summary>
+        /// Computes the number of delayed items and inspections for the provided
+        /// sequence using the cached arrival data. This is necessary because the
+        /// simplified Source->Sink model does not account for processing times
+        /// when advancing the simulation clock.
+        /// </summary>
+        private (int delays, int inspections) EvaluateSequence(string[] sequence)
+        {
+            double currentTime = 0.0;
+            int delays = 0;
+            int inspections = 0;
+
+            foreach (var partId in sequence)
+            {
+                if (!int.TryParse(partId, out int idx) || idx < 0 || idx >= _arrivalData.Count)
+                {
+                    continue;
+                }
+
+                var row = _arrivalData[idx];
+
+                double tSoldadura = ParseDouble(row, "tSoldadura");
+                double tInspeccion = ParseDouble(row, "tInspeccion");
+                bool inspeccionOn = ParseDouble(row, "inspeccionOn") >= 1.0;
+                double dueDate = ParseDouble(row, "DueDate");
+
+                currentTime += tSoldadura;
+                if (inspeccionOn)
+                {
+                    currentTime += tInspeccion;
+                    inspections++;
+                }
+
+                if (dueDate > 0 && currentTime > dueDate)
+                {
+                    delays++;
+                }
+            }
+
+            return (delays, inspections);
+        }
+
+        private static double ParseDouble(Dictionary<string, string> row, string key)
+        {
+            if (row.TryGetValue(key, out string val))
+            {
+                if (double.TryParse(val?.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double d))
+                {
+                    return d;
+                }
+            }
+            return 0.0;
+        }
+
         /// <inheritdoc />
         public void Run()
         {
@@ -180,9 +241,10 @@ namespace UnitySimuLean
                 // Loop until no more events remain in the clock.
             }
 
-            // Collect metrics from the sink.
-            _delayCount = _sink.GetRetrasados();
-            _inspectionCount = _sink.GetInspecciones();
+            // Compute metrics using the cached sequence data.
+            var (delays, inspections) = EvaluateSequence(_currentSequence);
+            _delayCount = delays;
+            _inspectionCount = inspections;
         }
 
         /// <inheritdoc />
