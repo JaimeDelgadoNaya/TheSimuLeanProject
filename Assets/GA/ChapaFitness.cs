@@ -40,11 +40,10 @@ namespace ChapasGA.GA
                 if (doInspect) inspections++;
                 if (C > chapa.DueDate) delays++;
             }
-            // Maximize inspections while minimizing delays by subtracting the
-            // number of delays from the number of inspections. Ensure the
-            // returned value is always positive so the GA can properly
-            // maximize fitness.
-            double fitness = inspections - delays;
+            // Compute fitness by rewarding inspections and heavily penalizing
+            // delays. Maintain a small positive floor so the GA can still
+            // maximize the value even when all candidates perform poorly.
+            double fitness = (inspections * 1.0) - (delays * 100.0);
             if (fitness <= 0)
             {
                 fitness = 1e-6;
