@@ -18,7 +18,7 @@ namespace ChapasGA.GA
         public int[] BestBits { get; set; }
         public double[] CompletionTimes { get; set; }
 
-        public void RunGA(IList<Chapa> chapas, int populationSize, int generations, float crossoverProb, float mutationProb)
+        public void RunGA(IList<Chapa> chapas, int populationSize, int generations, float crossoverProb, float mutationProb, float elitismPercentage)
         {
             int n = chapas.Count;
             var mandatory = chapas.Select(c => c.inspeccionOn).ToArray();
@@ -32,7 +32,7 @@ namespace ChapasGA.GA
             {
                 CrossoverProbability = crossoverProb,
                 MutationProbability = mutationProb,
-                Reinsertion = new ElitistReinsertion(),
+                Reinsertion = new ConfigurableElitistReinsertion(elitismPercentage),
                 Termination = new GenerationNumberTermination(generations)
             };
 

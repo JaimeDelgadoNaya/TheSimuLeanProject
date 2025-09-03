@@ -15,6 +15,7 @@ namespace ChapasGA.Mono
         [SerializeField] private int generations = 500;
         [SerializeField] private float crossoverProb = 0.9f;
         [SerializeField] private float mutationProb = 0.15f;
+        [SerializeField] private float elitismPercentage = 0.05f;
         [SerializeField] private bool dryRun = false;
         [SerializeField] private bool logToConsole = false;
 
@@ -68,7 +69,7 @@ namespace ChapasGA.Mono
             }
             else
             {
-                _runner.RunGA(_chapas, populationSize, generations, crossoverProb, mutationProb);
+                _runner.RunGA(_chapas, populationSize, generations, crossoverProb, mutationProb, elitismPercentage);
             }
 
             if (logToConsole)
