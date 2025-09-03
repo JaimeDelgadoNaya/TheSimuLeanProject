@@ -13,7 +13,8 @@ namespace UnitySimuLean
     public class SequenceFitness : IFitness
     {
         private readonly ISimulationRunner _runner;
-        private readonly int _requiredInspectionCount;
+        private readonly int _delayPenalty;
+        private readonly int _inspectionReward;
         private readonly Dictionary<IChromosome, (int delay, int inspections)> _metrics =
             new Dictionary<IChromosome, (int delay, int inspections)>();
 
@@ -21,15 +22,13 @@ namespace UnitySimuLean
         /// Initializes a new instance of the <see cref="SequenceFitness"/> class.
         /// </summary>
         /// <param name="runner">Simulation runner used to evaluate sequences.</param>
-        /// <param name="requiredInspectionCount">
-        /// Number of inspections that must remain constant across evaluations.
-        /// Any chromosome producing a different value will receive the worst
-        /// possible fitness.
-        /// </param>
-        public SequenceFitness(ISimulationRunner runner, int requiredInspectionCount)
+        /// <param name="delayPenalty">Penalty applied per delay.</param>
+        /// <param name="inspectionReward">Reward applied per inspection.</param>
+        public SequenceFitness(ISimulationRunner runner, int delayPenalty = 100, int inspectionReward = 1)
         {
             _runner = runner ?? throw new ArgumentNullException(nameof(runner));
-            _requiredInspectionCount = requiredInspectionCount;
+            _delayPenalty = delayPenalty;
+            _inspectionReward = inspectionReward;
         }
 
         /// <summary>
@@ -81,10 +80,8 @@ namespace UnitySimuLean
             // Store metrics for later retrieval.
             _metrics[chromosome] = (delayCount, inspectionCount);
 
-            // 4. Compute a fitness score. Any change in inspection count is heavily penalised.
-            double fitness = inspectionCount == _requiredInspectionCount
-                ? -delayCount
-                : double.MinValue;
+            // 4. Compute a fitness score prioritizing minimal delays and maximal inspections.
+            double fitness = (inspectionCount * _inspectionReward) - (delayCount * _delayPenalty);
 
             return (fitness, delayCount, inspectionCount);
         }
