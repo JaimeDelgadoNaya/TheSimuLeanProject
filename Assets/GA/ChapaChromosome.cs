@@ -69,19 +69,6 @@ namespace ChapasGA.GA
             {
                 ReplaceGene(i, new Gene(fixedOrder[i]));
             }
-            // Repair bits
-            var bits = GetInspectionBits();
-            for (int i = 0; i < bits.Length; i++)
-            {
-                if (_mandatory[i] == 1)
-                {
-                    bits[i] = 1;
-                }
-            }
-            for (int i = 0; i < bits.Length; i++)
-            {
-                ReplaceGene(LengthPerPart + i, new Gene(bits[i]));
-            }
         }
     }
 }
