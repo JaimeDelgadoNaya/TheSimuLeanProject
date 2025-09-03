@@ -13,12 +13,12 @@ namespace UnitySimuLean
     public class Optimizer : MonoBehaviour
     {
         [Header("Input Variables")]
-        [SerializeField] private List<SElement> iElements = new();
-        [SerializeField] private List<string> iParameters = new();
+        [SerializeField] private List<SElement> iElements = new List<SElement>();
+        [SerializeField] private List<string> iParameters = new List<string>();
 
         [Header("Output Variables")]
-        [SerializeField] private List<SElement> oElements = new();
-        [SerializeField] private List<string> variables = new();
+        [SerializeField] private List<SElement> oElements = new List<SElement>();
+        [SerializeField] private List<string> variables = new List<string>();
 
         /// <summary>
         /// Sets the value of a property identified by <paramref name="propertyName"/>
