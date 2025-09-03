@@ -33,7 +33,7 @@ namespace ChapasGA.GA
             {
                 int idx = order[i];
                 var chapa = _chapas[idx];
-                bool doInspect = bits[idx] == 1 || chapa.inspeccionOn == 1;
+                bool doInspect = bits[idx] == 1;
                 double proc = chapa.tSoldadura + (doInspect ? chapa.tInspeccion : 0);
                 C += proc;
                 completionTimes[i] = C;

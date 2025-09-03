@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using ChapasGA.Models;
 using GeneticSharp.Domain;
 using GeneticSharp.Domain.Populations;
@@ -20,8 +19,7 @@ namespace ChapasGA.GA
         public void RunGA(IList<Chapa> chapas, int populationSize, int generations, float crossoverProb, float mutationProb)
         {
             int n = chapas.Count;
-            var mandatory = chapas.Select(c => c.inspeccionOn).ToArray();
-            var chromosome = new ChapaChromosome(n, mandatory);
+            var chromosome = new ChapaChromosome(n);
             var fitness = new ChapaFitness(chapas);
             var population = new Population(populationSize, populationSize, chromosome);
             var selection = new TournamentSelection();
