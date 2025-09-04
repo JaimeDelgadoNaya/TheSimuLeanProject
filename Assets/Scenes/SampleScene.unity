@@ -735,7 +735,6 @@ GameObject:
   - component: {fileID: 1123213215}
   - component: {fileID: 1123213214}
   - component: {fileID: 1123213217}
-  - component: {fileID: 1123213218}
   - component: {fileID: 1123213216}
   m_Layer: 0
   m_Name: Simclock
@@ -783,19 +782,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 1123213213}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af532d5194704857856a7c9838c25d58, type: 3}
+  m_Script: {fileID: 11500000, guid: 8ec1a0a6a980456babc8cf3c40101f20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  settings: {fileID: 0}
-  enableOptimization: 1
-  headlessMode: 1
-  numberOfParts: 90
-  generations: 100
-  populationSize: 50
-  selectionType: 0
-  crossoverType: 0
-  mutationType: 0
-  simulationRunner: {fileID: 1123213218}
+  excelFileName: Llegada_Chapas.xlsx
+  populationSize: 200
+  generations: 500
+  crossoverProb: 0.9
+  mutationProb: 0.15
+  dryRun: 0
+  logToConsole: 1
 --- !u!114 &1123213217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -825,20 +821,6 @@ MonoBehaviour:
   - {fileID: 418561262}
   Variables:
   - Input
---- !u!114 &1123213218
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1123213213}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ecf1eaa665e75de40bdb88245f99cfa4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  source: {fileID: 389178485}
-  sink: {fileID: 418561262}
 --- !u!1001 &1240607689
 PrefabInstance:
   m_ObjectHideFlags: 0
