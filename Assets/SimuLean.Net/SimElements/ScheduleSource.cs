@@ -346,22 +346,22 @@ namespace SimuLean
         }
         void Eventcs.Execute()
         {
-            Debug.Log("Execute() llamado.");
+            //Debug.Log("Execute() llamado.");
             // Genera y procesa ítems mientras CreateItem() retorne uno
             Item newItem = CreateItem();
             while (newItem != null)
             {
-                Debug.Log("Procesando ítem (ID: " + newItem.GetId() + ", Prioridad: " + newItem.priority + ").");
+                //Debug.Log("Procesando ítem (ID: " + newItem.GetId() + ", Prioridad: " + newItem.priority + ").");
                 // Intenta enviar el ítem; si no se puede, se añade a la cola de ítems bloqueados
                 if (!this.GetOutput().SendItem(newItem, this))
                 {
-                    Debug.Log("Fallo al enviar el ítem, se añade a la cola.");
+                    //Debug.Log("Fallo al enviar el ítem, se añade a la cola.");
                     itemsInQueue.Enqueue(newItem);
                 }
                 numberIterms++;
                 newItem = CreateItem();
             }
-            Debug.Log("Todos los ítems de la fila actual procesados. Programando siguiente fila.");
+            //Debug.Log("Todos los ítems de la fila actual procesados. Programando siguiente fila.");
             // Una vez procesados todos los ítems de la fila actual, programa el siguiente evento
             ScheduleNext();
         }
@@ -370,7 +370,7 @@ namespace SimuLean
 
         Item CreateItem()
         {
-            Debug.Log("CreateItem() llamado. currentPendingQ = " + currentPendingQ);
+            //Debug.Log("CreateItem() llamado. currentPendingQ = " + currentPendingQ);
             // Si no quedan ítems pendientes, retorna null
             if (currentPendingQ <= 0)
             {
@@ -394,7 +394,7 @@ namespace SimuLean
 
                 
                 newItem.SetLabelValue(kvp.Key, kvp.Value);
-                Debug.Log("Atributo asignado: " + kvp.Key + " = " + kvp.Value);
+                //Debug.Log("Atributo asignado: " + kvp.Key + " = " + kvp.Value);
             }
 
 
@@ -414,11 +414,11 @@ namespace SimuLean
             // Asigna tipo, id y prioridad
             itemCounter++;
             newItem.SetId(currentItemName, itemCounter, priority);
-            Debug.Log($"Ítem creado de tipo: {currentItemName} con ID: {itemCounter}");
+            //Debug.Log($"Ítem creado de tipo: {currentItemName} con ID: {itemCounter}");
             // La prioridad ya fue asignada mediante SetId
-            Debug.Log("Prioridad asignada: " + priority);
+            //Debug.Log("Prioridad asignada: " + priority);
             newItem.vItem = vElement.GenerateItem(newItem.GetId());
-            Debug.Log("vItem asignado al ítem.");
+            //Debug.Log("vItem asignado al ítem.");
 
             return newItem;
         }
@@ -432,26 +432,26 @@ namespace SimuLean
         /// </summary>
         private void ScheduleNext()
         {
-            Debug.Log("ScheduleNext() llamado.");
+            // Debug.Log("ScheduleNext() llamado.");
             // Inicializa el iterador la primera vez.
             if (rowIterator == null)
             {
                 // Use the preprocessed and already ordered rows
                 rowIterator = preprocessedRows.GetEnumerator();
-                Debug.Log("Row iterator inicializado.");
+                //Debug.Log("Row iterator inicializado.");
             }
 
             // Avanza a la siguiente fila; si no hay más, cierra recursos y termina.
             if (!rowIterator.MoveNext())
             {
-                Debug.Log("No hay más filas. Cerrando archivo.");
+                //Debug.Log("No hay más filas. Cerrando archivo.");
                 dataFile?.Close();
                 return;
             }
 
             // Actualiza la fila actual.
             currentRow = rowIterator.Current;
-            Debug.Log("Fila actual leída: " + string.Join(", ", currentRow.Select(kvp => kvp.Key + "=" + kvp.Value)));
+            //Debug.Log("Fila actual leída: " + string.Join(", ", currentRow.Select(kvp => kvp.Key + "=" + kvp.Value)));
             // Actualiza currentArrivalTime usando el valor de la columna "Time".
             if (currentRow.ContainsKey("Time") && double.TryParse(currentRow["Time"], out double time))
             {
@@ -461,7 +461,7 @@ namespace SimuLean
             {
                 currentArrivalTime = simClock.GetSimulationTime();
             }
-            Debug.Log("Tiempo de llegada actual: " + currentArrivalTime);
+            //Debug.Log("Tiempo de llegada actual: " + currentArrivalTime);
             // Actualiza currentItemName usando el valor de la columna "Name".
             if (currentRow.ContainsKey("Name"))
             {
@@ -471,7 +471,7 @@ namespace SimuLean
             {
                 currentItemName = "Default";
             }
-            Debug.Log("Nombre del ítem actual: " + currentItemName);
+            //Debug.Log("Nombre del ítem actual: " + currentItemName);
             // Actualiza currentPendingQ usando el valor de la columna "Q".
             if (currentRow.ContainsKey("Q") && int.TryParse(currentRow["Q"], out int q))
             {
@@ -481,10 +481,10 @@ namespace SimuLean
             {
                 currentPendingQ = 1;
             }
-            Debug.Log("Cantidad pendiente (Q): " + currentPendingQ);
+            //Debug.Log("Cantidad pendiente (Q): " + currentPendingQ);
             // Calcula el retraso (delay) para el siguiente evento.
             double delay = Math.Max(0, currentArrivalTime - simClock.GetSimulationTime());
-            Debug.Log("Programando el siguiente evento con retraso: " + delay);
+            //Debug.Log("Programando el siguiente evento con retraso: " + delay);
             // Programa el siguiente evento en el simulador.
             simClock.ScheduleEvent(this, delay);
         }

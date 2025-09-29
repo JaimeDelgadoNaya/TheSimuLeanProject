@@ -169,7 +169,7 @@ namespace SimuLean
         {
             if (theProcess == null)
             {
-                Debug.LogError("theProcess es null en Combiner.Receive");
+                //Debug.LogError("theProcess es null en Combiner.Receive");
                 return false;
             }
             if (theProcess.GetState() == State.IDLE)
@@ -257,7 +257,7 @@ namespace SimuLean
             }
             double totalDelay = soldadura + inspeccion;
 
-            Debug.Log($"{GetName()}: tSoldadura={soldadura}, tInspeccion={inspeccion}, totalDelay={totalDelay}");
+            //Debug.Log($"{GetName()}: tSoldadura={soldadura}, tInspeccion={inspeccion}, totalDelay={totalDelay}");
 
             return totalDelay;
         }
@@ -274,7 +274,7 @@ namespace SimuLean
                 int newReq = (int)nRefs.Value;
                 requirements[1] = newReq;
                 inputs[1].SetCapacity(newReq);
-                Debug.Log($"{GetName()}: nRefuerzos={newReq}");
+                //Debug.Log($"{GetName()}: nRefuerzos={newReq}");
             }
         }
 
@@ -313,7 +313,7 @@ namespace SimuLean
                 // 2. Enviar el nuevo ítem combinado al siguiente elemento.
                 if (GetOutput().SendItem(newItem, this))
                 {
-                    Debug.Log($"{GetName()}: Proceso completado en modo NewItem, ítem combinado enviado.");
+                    //Debug.Log($"{GetName()}: Proceso completado en modo NewItem, ítem combinado enviado.");
 
                     // 3. Destruir el ítem principal (del next element) si existe.
                     if (process.theItem != null && process.theItem.vItem is GameObject mainGo)
@@ -347,7 +347,7 @@ namespace SimuLean
                 {
                     theProcess.SetState(State.BLOCKED);
                     completed.Enqueue(process);
-                    Debug.LogWarning($"{GetName()}: No se pudo enviar el ítem combinado en modo NewItem.");
+                    //Debug.LogWarning($"{GetName()}: No se pudo enviar el ítem combinado en modo NewItem.");
                 }
             }
             else
@@ -361,13 +361,13 @@ namespace SimuLean
                     idleProccesses.Enqueue(process);
                     vElement.ReportState("Exit");
                     GetInput().NotifyAvaliable(this);
-                    Debug.Log($"{GetName()}: Proceso completado, estado reiniciado a IDLE.");
+                    //Debug.Log($"{GetName()}: Proceso completado, estado reiniciado a IDLE.");
                 }
                 else
                 {
                     theProcess.SetState(State.BLOCKED);
                     completed.Enqueue(process);
-                    Debug.LogWarning($"{GetName()}: No se pudo enviar el ítem, proceso bloqueado.");
+                    //Debug.LogWarning($"{GetName()}: No se pudo enviar el ítem, proceso bloqueado.");
                 }
             }
         }

@@ -46,7 +46,7 @@ namespace SimuLean
             retrasados = 0;
             // Guardamos el tiempo inicial (normalmente 0 al arrancar).
             startTime = simClock.GetSimulationTime();
-            Debug.Log($"[Sink] Start(): Inicializando. startTime = {startTime:F2} s.");
+            //Debug.Log($"[Sink] Start(): Inicializando. startTime = {startTime:F2} s.");
         }
 
         public override bool Unblock()
@@ -106,7 +106,7 @@ namespace SimuLean
 
             // Mostrar contador con tiempo actual de simulación
             Debug.Log($"[Sink] Receive() t={tiempoActual:F2} s: Ítem {theItem.GetId()} procesado. " +
-                      $"Total={numberIterms}, Inspecciones={inspeccionesRealizadas}, Retrasados={retrasados}.");
+            $"Total={numberIterms}, Inspecciones={inspeccionesRealizadas}, Retrasados={retrasados}.");
 
             // Si ya recibimos todos los ítems esperados, calculamos tiempo total
             if (expectedItems > 0 && numberIterms == expectedItems)

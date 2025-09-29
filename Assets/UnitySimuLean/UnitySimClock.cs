@@ -29,7 +29,7 @@ namespace UnitySimuLean
             }
         }
 
-        private double timeScale = 1;
+        [SerializeField] private double timeScale = 10000000;
 
         bool simOn = false;
         bool simStarted = false;

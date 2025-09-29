@@ -38,7 +38,7 @@ namespace SimuLean
             if (index >= 0 && index < outputs.Count && outputs[index].Receive(theItem))
             {
                 currentIndex = (index + 1) % outputs.Count;
-                Debug.Log($"[GeneralLink] Enviado desde {source.GetName()} a {outputs[index].GetName()}");
+                //Debug.Log($"[GeneralLink] Enviado desde {source.GetName()} a {outputs[index].GetName()}");
                 return true;
             }
 
@@ -49,7 +49,7 @@ namespace SimuLean
         // Notificación de que hay un hueco en algún destino
         public bool NotifyAvaliable(Element source)
         {
-            Debug.Log($"[GeneralLink] Notificación recibida de {source.GetName()}");
+            //Debug.Log($"[GeneralLink] Notificación recibida de {source.GetName()}");
             foreach (Element origin in origins)
             {
                 if (origin.Unblock())

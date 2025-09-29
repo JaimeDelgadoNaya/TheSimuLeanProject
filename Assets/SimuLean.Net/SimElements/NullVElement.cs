@@ -31,6 +31,6 @@ public class NullVElement : VElement
     public void ReportState(string msg)
     {
         // Opcional: Imprimir mensaje de estado en la consola para seguimiento.
-        Debug.Log($"[Headless] Estado: {msg}");
+        //Debug.Log($"[Headless] Estado: {msg}");
     }
 }

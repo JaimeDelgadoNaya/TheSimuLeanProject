@@ -81,23 +81,23 @@ namespace UnitySimuLean
 
         public override void InitializeSim()
         {
-            Debug.Log($"{this.name}: Inicializando InitializeSim() en UnityCombiner.");
+            //Debug.Log($"{this.name}: Inicializando InitializeSim() en UnityCombiner.");
 
             // Crear estrategia de retardo constante usando meanDelay.
             DoubleRandomProcess delayProcess = new ConstantRandomProcess((float)meanDelay);
             // Asignar el nombre del elemento a partir del GameObject.
             this.elementName = gameObject.name;
-            Debug.Log($"{this.name}: elementName asignado: {elementName}.");
+            //Debug.Log($"{this.name}: elementName asignado: {elementName}.");
 
             // Convertir initialBatchQuantity en un arreglo de requerimientos.
             int[] reqList = requirements;
-            Debug.Log($"{this.name}: Lista de requerimientos creada con valor: {string.Join(", ", reqList)}");
+            // Debug.Log($"{this.name}: Lista de requerimientos creada con valor: {string.Join(", ", reqList)}");
 
             // Verificar que capacity tenga un valor mayor a 0.
             if (capacity <= 0)
             {
                 capacity = 1;
-                Debug.LogWarning($"{this.name}: capacity no estaba definido o es 0. Se asigna capacity = 1 por defecto.");
+                //Debug.LogWarning($"{this.name}: capacity no estaba definido o es 0. Se asigna capacity = 1 por defecto.");
             }
             List<string> labels = updateLabels != null ? new List<string>(updateLabels) : new List<string>();
 
@@ -106,7 +106,7 @@ namespace UnitySimuLean
             //             modo batch, estrategia de pull, updateRequirements, etiquetas, capacity)
             theCombiner = new Combiner(reqList, delayProcess, elementName, UnitySimClock.Instance.clock,
                                         batchMode, null, updateRequirements, labels, capacity);
-            Debug.Log($"{this.name}: Combiner creado.");
+            //Debug.Log($"{this.name}: Combiner creado.");
 
             if (Experimenter.HeadlessActive)
             {
@@ -118,29 +118,29 @@ namespace UnitySimuLean
                 //Asignación normal para modo grafico
                 theCombiner.vElement = this;
             }
-            Debug.Log($"{this.name}: vElement asignado ({(Experimenter.HeadlessActive ? "NullVElement" : "UnityVElement")}).");
-            
-            
+            //Debug.Log($"{this.name}: vElement asignado ({(Experimenter.HeadlessActive ? "NullVElement" : "UnityVElement")}).");
+
+
 
             // Calcular vector de desplazamiento si outItemPosition está asignado.
             if (outItemPosition != null)
             {
                 odVector = outItemPosition.position - itemPosition.position;
-                Debug.Log($"{this.name}: odVector calculado: {odVector}.");
+                //Debug.Log($"{this.name}: odVector calculado: {odVector}.");
             }
             else
             {
-                Debug.LogWarning($"{this.name}: outItemPosition es null, no se calculará odVector.");
+                //Debug.LogWarning($"{this.name}: outItemPosition es null, no se calculará odVector.");
             }
 
-            Debug.Log($"[InitializeSim] {this.name}: Finalizado InitializeSim() con elementName {elementName}.");
+            // Debug.Log($"[InitializeSim] {this.name}: Finalizado InitializeSim() con elementName {elementName}.");
         }
 
         public override void StartSim()
         {
             if (itemPosition == null)
                 itemPosition = transform;
-            Debug.Log($"{this.name}: Iniciando StartSim().");
+            // Debug.Log($"{this.name}: Iniciando StartSim().");
             theCombiner.Start();
         }
 
@@ -308,7 +308,7 @@ namespace UnitySimuLean
                     }
                 }
             }
-            Debug.Log($"{this.name}: RestartSim() invocado, reiniciando StartSim().");
+            //Debug.Log($"{this.name}: RestartSim() invocado, reiniciando StartSim().");
             StartSim();
         }
     }

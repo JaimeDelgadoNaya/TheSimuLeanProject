@@ -44,7 +44,7 @@ namespace SimuLean
         {
             itemsQueue.Clear();
             currentItems = 0;
-            Debug.Log($"[CombinerInput] Start(): Entrada {inputId} iniciada, cola limpia y currentItems = {currentItems}.");
+            //Debug.Log($"[CombinerInput] Start(): Entrada {inputId} iniciada, cola limpia y currentItems = {currentItems}.");
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace SimuLean
                     releasedItems.Enqueue(theItem);
                     currentItems--;
                     // GetInput().NotifyAvaliable(this); Esto no est�
-                    Debug.Log($"[CombinerInput] Release(): �tem liberado. currentItems ahora es {currentItems}.");
+                    //Debug.Log($"[CombinerInput] Release(): �tem liberado. currentItems ahora es {currentItems}.");
                 }
                 else
                 {
@@ -79,7 +79,7 @@ namespace SimuLean
         /// </summary>
         public override int GetQueueLength()
         {
-            Debug.Log($"[CombinerInput] GetQueueLength(): Entrada {inputId} tiene {currentItems} �tems.");
+            //Debug.Log($"[CombinerInput] GetQueueLength(): Entrada {inputId} tiene {currentItems} �tems.");
             return currentItems;
         }
 
@@ -96,7 +96,7 @@ namespace SimuLean
         /// </summary>
         public override bool Unblock()
         {
-            Debug.Log($"[CombinerInput] Unblock(): Notificando disponibilidad desde entrada {inputId}.");
+            //Debug.Log($"[CombinerInput] Unblock(): Notificando disponibilidad desde entrada {inputId}.");
 
             this.GetInput().NotifyAvaliable(this);
             return true;
@@ -109,7 +109,7 @@ namespace SimuLean
         {
             if (CheckAvaliability(theItem))
             {
-                Debug.Log($"[CombinerInput] Receive(): Aceptando �tem {theItem.GetId()} en entrada {inputId}.");
+                //Debug.Log($"[CombinerInput] Receive(): Aceptando �tem {theItem.GetId()} en entrada {inputId}.");
                 currentItems++;
                 theItem.SetConstrainedInput(this.inputId);
                 itemsQueue.Enqueue(theItem);
@@ -161,7 +161,7 @@ namespace SimuLean
         public void SetCapacity(int newCapacity)
         {
             capacity = newCapacity;
-            Debug.Log($"[CombinerInput] SetCapacity(): Capacidad de entrada {inputId} actualizada a {capacity}.");
+            //Debug.Log($"[CombinerInput] SetCapacity(): Capacidad de entrada {inputId} actualizada a {capacity}.");
         }
 
         /// <summary>
