@@ -10,19 +10,25 @@ namespace SimuLean
     {
         int capacity;
         int currentItems;
-
         int inputId;
-
         Queue<Item> itemsQ;
-
         ArrivalListener aListener;
 
-        public ConstrainedInput(int capacity, ArrivalListener aListener, int inputId, String myName, SimClock sClock) : base(myName, sClock)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="capacity">Capacidad de la cola</param>
+        /// <param name="aListener">Listener de llegadas</param>
+        /// <param name="inputId">ID de entrada</param>
+        /// <param name="myName">Nombre del elemento</param>
+        /// <param name="sClock">Reloj de simulación</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public ConstrainedInput(int capacity, ArrivalListener aListener, int inputId, String myName, SimClock sClock, VElement vElement = null)
+            : base(myName, sClock, vElement)
         {
             this.aListener = aListener;
             this.capacity = capacity;
             this.inputId = inputId;
-
             itemsQ = new Queue<Item>(capacity);
         }
 
@@ -40,7 +46,6 @@ namespace SimuLean
             {
                 wholeItems.Enqueue(itemsQ.Dequeue());
                 currentItems--;
-
                 GetInput().NotifyAvaliable(this);
             }
 
@@ -51,6 +56,7 @@ namespace SimuLean
         {
             return currentItems;
         }
+
         override public int GetFreeCapacity()
         {
             return capacity - currentItems;
@@ -66,13 +72,10 @@ namespace SimuLean
             if (currentItems < capacity || capacity < 0)
             {
                 currentItems++;
-                theItem.SetConstrainedInput(this.inputId); //For item placement
+                theItem.SetConstrainedInput(this.inputId);
                 itemsQ.Enqueue(theItem);
                 aListener.GetVElement().LoadItem(theItem);
-
                 aListener.ItemReceived(theItem, inputId);
-
-
                 return true;
             }
             else
@@ -83,13 +86,10 @@ namespace SimuLean
 
         public override bool CheckAvaliability(Item theItem)
         {
-            return !(currentItems >= capacity || capacity < 0);
-            // Negative capacity means unlimited, always available
             if (capacity < 0)
             {
                 return true;
             }
-
             return currentItems < capacity;
         }
 

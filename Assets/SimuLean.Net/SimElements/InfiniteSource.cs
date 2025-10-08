@@ -9,7 +9,13 @@
 
         int numberIterms;
 
-        public InfiniteSource(string name, SimClock state) : base(name, state)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="name">Nombre del elemento</param>
+        /// <param name="state">Reloj de simulación</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public InfiniteSource(string name, SimClock state, VElement vElement = null) : base(name, state, vElement)
         {
         }
 

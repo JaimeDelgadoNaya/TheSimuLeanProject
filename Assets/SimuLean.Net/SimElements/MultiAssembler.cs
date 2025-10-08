@@ -25,7 +25,18 @@ namespace SimuLean
 
         bool receivingItems = false;
 
-        public MultiAssembler(int capacity, int[] requirements, DoubleRandomProcess delay, String name, SimClock sClock, bool batchMode = false) : base(name, sClock)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="capacity">Capacidad del multiassembler</param>
+        /// <param name="requirements">Array de requerimientos</param>
+        /// <param name="delay">Proceso de delay</param>
+        /// <param name="name">Nombre del elemento</param>
+        /// <param name="sClock">Reloj de simulación</param>
+        /// <param name="batchMode">Modo batch</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public MultiAssembler(int capacity, int[] requirements, DoubleRandomProcess delay, String name, SimClock sClock, bool batchMode = false, VElement vElement = null)
+            : base(name, sClock, vElement)
         {
             idleProccesses = new Queue<ServerProcess>(capacity);
             workInProgress = new List<ServerProcess>(capacity);
@@ -42,7 +53,7 @@ namespace SimuLean
             inputs = new ConstrainedInput[requirements.Length];
             for (int i = 0; i < inputs.Length; i++)
             {
-                inputs[i] = new ConstrainedInput(requirements[i], this, i, this.name + ".Input" + i, simClock);
+                inputs[i] = new ConstrainedInput(requirements[i], this, i, this.name + ".Input" + i, simClock, vElement);
             }
         }
 

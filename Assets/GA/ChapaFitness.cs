@@ -1,18 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ChapasGA.Models;
 using GeneticSharp.Domain.Chromosomes;
 using GeneticSharp.Domain.Fitnesses;
+using SimuLean.Serialization;
 
 namespace ChapasGA.GA
 {
     public class ChapaFitness : IFitness
     {
         private readonly IList<Chapa> _chapas;
+        private readonly ChapaGARunner _runner;
 
-        public ChapaFitness(IList<Chapa> chapas)
+        /// <summary>
+        /// Constructor con simulación headless usando modelo extraído de Unity
+        /// </summary>
+        /// <param name="chapas">Lista de chapas</param>
+        /// <param name="modelConfig">Configuración del modelo extraído desde Unity</param>
+        public ChapaFitness(IList<Chapa> chapas, SimulationConfig modelConfig)
         {
             _chapas = chapas;
+            _runner = new ChapaGARunner();
+            _runner.SetModelConfig(modelConfig);
         }
 
         public double Evaluate(IChromosome chromosome)
@@ -23,25 +33,34 @@ namespace ChapasGA.GA
 
         public (double fitness, int inspections, int delays, double[] completionTimes) EvaluateDetailed(ChapaChromosome c)
         {
+            return EvaluateWithSimulation(c);
+        }
+
+        /// <summary>
+        /// Evaluación usando simulación headless (modelo extraído de Unity)
+        /// </summary>
+        private (double fitness, int inspections, int delays, double[] completionTimes) EvaluateWithSimulation(ChapaChromosome c)
+        {
             var order = c.GetOrder();
             var bits = c.GetInspectionBits();
-            double C = 0;
-            int inspections = 0;
-            int delays = 0;
-            var completionTimes = new double[order.Length];
-            for (int i = 0; i < order.Length; i++)
-            {
-                int idx = order[i];
-                var chapa = _chapas[idx];
-                bool doInspect = bits[idx] == 1;
-                double proc = chapa.tSoldadura + (doInspect ? chapa.tInspeccion : 0);
-                C += proc;
-                completionTimes[i] = C;
-                if (doInspect) inspections++;
-                if (C > chapa.DueDate) delays++;
-            }
-            double fitness = (inspections * 1.0) - (delays * 100.0);
-            return (fitness, inspections, delays, completionTimes);
+
+            // Convertir IList<int> a int[]
+            var orderArray = order.ToArray();
+
+            // Ejecutar simulación headless
+            var result = _runner.RunSimulationWithConfig(
+                _chapas as List<Chapa> ?? new List<Chapa>(_chapas),
+                orderArray,
+                bits
+            );
+
+            // Calcular fitness usando métricas de la simulación
+            double fitness = result.CalculateFitness();
+
+            // Crear array of completion times (por ahora vacío, se puede mejorar)
+            double[] completionTimes = new double[bits.Length];
+            
+            return (fitness, result.TotalInspections, result.TotalDelays, completionTimes);
         }
     }
 }

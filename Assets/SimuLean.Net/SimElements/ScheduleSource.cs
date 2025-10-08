@@ -44,10 +44,16 @@ namespace SimuLean
         private List<Dictionary<string, string>> preprocessedRows; //Lista para reordenar filas de datos
         // Contador para asignar IDs únicos a cada ítem creado
         private int itemCounter = 0;
+        
         // Constructor modificado con parámetros opcionales. Con autoSort=false se
         // respetará el orden provisto (útil para órdenes generados por el GA).
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
         /// <param name="autoSort">Cuando es false, se respeta el orden provisto (útil para órdenes generadas por el GA).</param>
-        public ScheduleSource(String name, SimClock state, String fileName = null, Dictionary<string, List<string>> dataDict = null, Item modelItem = null, string sheetName = null, bool autoSort = true) : base(name, state)
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public ScheduleSource(String name, SimClock state, String fileName = null, Dictionary<string, List<string>> dataDict = null, Item modelItem = null, string sheetName = null, bool autoSort = true, VElement vElement = null) 
+            : base(name, state, vElement)
         {
             this.fileName = fileName;
             this.dataDict = dataDict;

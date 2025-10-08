@@ -18,7 +18,15 @@ namespace SimuLean
         DoubleRandomProcess[] randomTimes;
         string name;
 
-        public MultiServer(DoubleRandomProcess[] randomTimes, String name, SimClock sClock) : base(name, sClock)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="randomTimes">Array de procesos de tiempo aleatorio</param>
+        /// <param name="name">Nombre del elemento</param>
+        /// <param name="sClock">Reloj de simulación</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public MultiServer(DoubleRandomProcess[] randomTimes, String name, SimClock sClock, VElement vElement = null) 
+            : base(name, sClock, vElement)
         {
             idleProccesses = new Queue<ServerProcess>(randomTimes.Length);
             workInProgress = new List<ServerProcess>(randomTimes.Length);

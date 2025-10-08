@@ -6,15 +6,20 @@ namespace SimuLean
     public class Operator : Element, WorkStation
     {
         ServerProcess theProcess;
-
         int currentItems;
         int capacity;
-
         string name;
-
         public bool atPickPoint;
 
-        public Operator(String name, SimClock sClock, int capacity) : base(name, sClock)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="name">Nombre del operador</param>
+        /// <param name="sClock">Reloj de simulación</param>
+        /// <param name="capacity">Capacidad del operador</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public Operator(String name, SimClock sClock, int capacity, VElement vElement = null) 
+            : base(name, sClock, vElement)
         {
             this.name = name;
             this.capacity = capacity;
@@ -22,9 +27,7 @@ namespace SimuLean
 
         public override void Start()
         {
-
             theProcess = new ServerProcess(this, new PoissonProcess(1), 1);
-
             currentItems = 0;
             atPickPoint = false;
         }
@@ -33,6 +36,7 @@ namespace SimuLean
         {
             return currentItems;
         }
+
         override public int GetFreeCapacity()
         {
             return capacity - currentItems;
@@ -112,23 +116,18 @@ namespace SimuLean
                 else
                 {
                     vElement.LoadItem(theItem);
-
                     return false;
                 }
-
             }
         }
 
         void WorkStation.CompleteServerProcess(ServerProcess theProcess)
         {
-
             ArrayList itemsStoraged = theProcess.GetItems();
             ArrayList itemsToRemove = new ArrayList();
 
-
             foreach (Item it in theProcess.GetItems())
             {
-
                 if (GetOutput().SendItem(it, this))
                 {
                     itemsToRemove.Add(it);
@@ -145,13 +144,12 @@ namespace SimuLean
                     return;
                 }
 
+                vElement.ReportState("Exit all");
             }
 
+            theProcess.state = 0;
             theProcess.ClearList();
             GetInput().NotifyAvaliable(this);
-
-            return;
-
         }
 
         public override bool CheckAvaliability(Item theItem)
@@ -162,13 +160,11 @@ namespace SimuLean
         public void PickItem() //Called once the operator arrives at the origin
         {
             GetInput().NotifyAvaliable(this);
-
         }
 
         public void LeaveItem() //Called once the operator arrives at the destination
         {
             simClock.ScheduleEvent(theProcess, 0.0);
-
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using SimuLean.Headless;
+using System;
+using System.Collections;
 
 namespace SimuLean
 {
@@ -8,16 +10,31 @@ namespace SimuLean
     public abstract class Element
     {
         private Link input, output;
-
         protected SimClock simClock;
-
         public VElement vElement;
-
         readonly string name;
-
         private int type;
-
         static ArrayList elements;
+
+        /// <summary>
+        /// Constructor con VElement opcional para modo headless.
+        /// </summary>
+        /// <param name="name">Nombre del elemento</param>
+        /// <param name="simClock">Reloj de simulación</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public Element(string name, SimClock simClock, VElement vElement = null)
+        {
+            this.name = name;
+            this.simClock = simClock;
+            
+            // Si no se proporciona VElement, usar headless
+            this.vElement = vElement ?? new HeadlessVElement(enableLogging: false);
+            
+            if (elements == null)
+                elements = new ArrayList();
+            
+            elements.Add(this);
+        }
 
         /// <summary>
         /// Returns list of all elements in the model.
@@ -25,10 +42,6 @@ namespace SimuLean
         /// <returns></returns>
         public static ArrayList GetElements()
         {
-            if (elements == null)
-            {
-                elements = new ArrayList();
-            }
             return elements;
         }
 
@@ -38,23 +51,12 @@ namespace SimuLean
         /// <returns></returns>
         public static int GetInventory()
         {
-            ArrayList elems = GetElements();
-            int inv = 0;
-
+            int count = 0;
             foreach (Element e in elements)
             {
-                inv += e.GetQueueLength();
+                count += e.GetQueueLength();
             }
-
-            return inv;
-        }
-
-        public Element(string name, SimClock simClock)
-        {
-            this.name = name;
-            this.simClock = simClock;
-
-            GetElements().Add(this);
+            return count;
         }
 
         /// <summary>
@@ -83,7 +85,6 @@ namespace SimuLean
         {
             return output;
         }
-
 
         /// <summary>
         /// Sets <paramref name="output"/> link for connections.
@@ -126,7 +127,7 @@ namespace SimuLean
         /// </summary>
         public abstract void Start();
 
-          /// <summary>
+        /// <summary>
         /// Gets the current items in the element
         /// </summary>
         /// <returns></returns>

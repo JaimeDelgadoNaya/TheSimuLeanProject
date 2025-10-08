@@ -18,7 +18,17 @@ namespace SimuLean
 
         Item blockedItem;
 
-        public ProviderSource(bool useSocket, String name, SimClock state, double minTime = 30.0, double maxTime = 60.0) : base(name, state)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="useSocket">Indica si usa socket</param>
+        /// <param name="name">Nombre del elemento</param>
+        /// <param name="state">Reloj de simulación</param>
+        /// <param name="minTime">Tiempo mínimo de lead time</param>
+        /// <param name="maxTime">Tiempo máximo de lead time</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public ProviderSource(bool useSocket, String name, SimClock state, double minTime = 30.0, double maxTime = 60.0, VElement vElement = null) 
+            : base(name, state, vElement)
         {
             this.useSocket = useSocket;
 

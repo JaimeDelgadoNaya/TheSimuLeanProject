@@ -19,7 +19,15 @@ namespace SimuLean
         public bool readyToLeave = false;
         bool isReceiving = false;
 
-        public Forklift(String name, SimClock sClock, int capacity) : base(name, sClock)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="name">Nombre del elemento</param>
+        /// <param name="sClock">Reloj de simulación</param>
+        /// <param name="capacity">Capacidad del forklift</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public Forklift(String name, SimClock sClock, int capacity, VElement vElement = null) 
+            : base(name, sClock, vElement)
         {
             this.name = name;
             this.capacity = capacity;

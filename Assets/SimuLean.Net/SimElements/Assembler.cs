@@ -29,7 +29,16 @@ namespace SimuLean
         string name;
 
 
-        public Assembler(string name, SimClock sClock, DoubleRandomProcess randomTimes, int requirements) : base(name, sClock)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="name">Nombre del elemento</param>
+        /// <param name="sClock">Reloj de simulación</param>
+        /// <param name="randomTimes">Proceso de tiempos aleatorios</param>
+        /// <param name="requirements">Requerimientos</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public Assembler(string name, SimClock sClock, DoubleRandomProcess randomTimes, int requirements, VElement vElement = null) 
+            : base(name, sClock, vElement)
         {
             this.randomTimes = randomTimes;
             this.name = name;

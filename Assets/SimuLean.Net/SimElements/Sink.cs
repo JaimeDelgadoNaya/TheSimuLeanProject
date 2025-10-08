@@ -20,7 +20,13 @@ namespace SimuLean
         // Tiempo de simulación en el que inicia la simulación (normalmente 0).
         private double startTime;
 
-        public Sink(string name, SimClock state) : base(name, state)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="name">Nombre del elemento</param>
+        /// <param name="state">Reloj de simulación</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public Sink(string name, SimClock state, VElement vElement = null) : base(name, state, vElement)
         {
         }
 
@@ -105,15 +111,15 @@ namespace SimuLean
             vElement.LoadItem(theItem);
 
             // Mostrar contador con tiempo actual de simulación
-            Debug.Log($"[Sink] Receive() t={tiempoActual:F2} s: Ítem {theItem.GetId()} procesado. " +
-            $"Total={numberIterms}, Inspecciones={inspeccionesRealizadas}, Retrasados={retrasados}.");
+            //Debug.Log($"[Sink] Receive() t={tiempoActual:F2} s: Ítem {theItem.GetId()} procesado. " +
+            //$"Total={numberIterms}, Inspecciones={inspeccionesRealizadas}, Retrasados={retrasados}.");
 
             // Si ya recibimos todos los ítems esperados, calculamos tiempo total
             if (expectedItems > 0 && numberIterms == expectedItems)
             {
                 double totalTime = tiempoActual - startTime;
-                Debug.Log($"[Sink] Todos los ítems esperados ({expectedItems}) han llegado.");
-                Debug.Log($"[Sink] Tiempo total de simulación: {totalTime:F2} s (desde {startTime:F2} hasta {tiempoActual:F2}).");
+                //Debug.Log($"[Sink] Todos los ítems esperados ({expectedItems}) han llegado.");
+                //Debug.Log($"[Sink] Tiempo total de simulación: {totalTime:F2} s (desde {startTime:F2} hasta {tiempoActual:F2}).");
             }
 
             return true;

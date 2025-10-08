@@ -32,6 +32,9 @@ namespace SimuLean
 
 
         // Constructor
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
         public Combiner(
             int[] requirements,
             DoubleRandomProcess delayStrategy,
@@ -41,8 +44,9 @@ namespace SimuLean
             InputStrategy pullMode = null,
             bool updateRequirements = false,
             List<string> updateLabels = null,
-            int capacity = 1)
-            : base(new DoubleRandomProcess[] { delayStrategy }, name, simClock)
+            int capacity = 1,
+            VElement vElement = null)
+            : base(new DoubleRandomProcess[] { delayStrategy }, name, simClock, vElement)
         {
             this.requirements = requirements;
             this.delayStrategy = delayStrategy;
@@ -63,7 +67,7 @@ namespace SimuLean
             inputs = new CombinerInput[requirements.Length];
             for (int i = 0; i < requirements.Length; i++)
             {
-                inputs[i] = new CombinerInput(requirements[i], this, i, $"{name}.Input{i}", simClock, this.pullMode);
+                inputs[i] = new CombinerInput(requirements[i], this, i, $"{name}.Input{i}", simClock, this.pullMode, vElement);
             }
         }
 

@@ -24,7 +24,17 @@ namespace SimuLean
         int totalOrders;
         int totalTrucks;
 
-        public CustomerSink(int capacity, String name, SimClock state, int minOrder, int maxOrder) : base(name, state)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="capacity">Capacidad del sink</param>
+        /// <param name="name">Nombre del elemento</param>
+        /// <param name="state">Reloj de simulación</param>
+        /// <param name="minOrder">Orden mínima</param>
+        /// <param name="maxOrder">Orden máxima</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public CustomerSink(int capacity, String name, SimClock state, int minOrder, int maxOrder, VElement vElement = null) 
+            : base(name, state, vElement)
         {
             this.capacity = capacity;
 

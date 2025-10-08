@@ -4,7 +4,7 @@ using UnityEngine;
 namespace SimuLean
 {
     /// <summary>
-    /// CombinerInput: Representa la entrada del Combiner, similar a la versi�n en Python.
+    /// CombinerInput: Representa la entrada del Combiner, similar a la versión en Python.
     /// </summary>
     public class CombinerInput : Element
     {
@@ -16,16 +16,17 @@ namespace SimuLean
         InputStrategy inputStrategy;
 
         /// <summary>
-        /// Constructor.
+        /// Constructor con soporte para modo headless.
         /// </summary>
-        /// <param name="capacity">Capacidad m�xima de la entrada.</param>
-        /// <param name="arrivalListener">Objeto ArrivalListener (por ejemplo, el Combiner) que recibir� notificaciones.</param>
+        /// <param name="capacity">Capacidad máxima de la entrada.</param>
+        /// <param name="arrivalListener">Objeto ArrivalListener (por ejemplo, el Combiner) que recibirá notificaciones.</param>
         /// <param name="inputId">Identificador de la entrada.</param>
         /// <param name="name">Nombre de la entrada.</param>
-        /// <param name="simClock">Reloj de simulaci�n.</param>
-        /// <param name="inputStrategy">Estrategia para validar los �tems; si es nula se usa DefaultStrategy.</param>
-        public CombinerInput(int capacity, ArrivalListener arrivalListener, int inputId, string name, SimClock simClock, InputStrategy inputStrategy = null)
-            : base(name, simClock)
+        /// <param name="simClock">Reloj de simulación.</param>
+        /// <param name="inputStrategy">Estrategia para validar los ítems; si es nula se usa DefaultStrategy.</param>
+        /// <param name="vElement">Implementación de VElement (null para headless por defecto)</param>
+        public CombinerInput(int capacity, ArrivalListener arrivalListener, int inputId, string name, SimClock simClock, InputStrategy inputStrategy = null, VElement vElement = null)
+            : base(name, simClock, vElement)
         {
             this.capacity = capacity;
             this.currentItems = 0;
@@ -38,7 +39,7 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Inicializa la entrada: limpia la cola y reinicia el contador de �tems.
+        /// Inicializa la entrada: limpia la cola y reinicia el contador de ítems.
         /// </summary>
         public override void Start()
         {
@@ -48,10 +49,10 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Libera hasta 'quantity' �tems de la cola.
+        /// Libera hasta 'quantity' ítems de la cola.
         /// </summary>
-        /// <param name="quantity">Cantidad de �tems a liberar.</param>
-        /// <returns>Cola con los �tems liberados.</returns>
+        /// <param name="quantity">Cantidad de ítems a liberar.</param>
+        /// <returns>Cola con los ítems liberados.</returns>
         public Queue<Item> Release(int quantity)
         {
             Queue<Item> releasedItems = new Queue<Item>();
@@ -64,7 +65,7 @@ namespace SimuLean
                     releasedItems.Enqueue(theItem);
                     currentItems--;
                     // GetInput().NotifyAvaliable(this); Esto no est�
-                    //Debug.Log($"[CombinerInput] Release(): �tem liberado. currentItems ahora es {currentItems}.");
+                    //Debug.Log($"[CombinerInput] Release(): Ítem liberado. currentItems ahora es {currentItems}.");
                 }
                 else
                 {
@@ -75,11 +76,11 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Devuelve el n�mero de �tems actualmente en la cola.
+        /// Devuelve el número de ítems actualmente en la cola.
         /// </summary>
         public override int GetQueueLength()
         {
-            //Debug.Log($"[CombinerInput] GetQueueLength(): Entrada {inputId} tiene {currentItems} �tems.");
+            //Debug.Log($"[CombinerInput] GetQueueLength(): Entrada {inputId} tiene {currentItems} ítems.");
             return currentItems;
         }
 
@@ -92,7 +93,7 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Notifica la disponibilidad llamando al m�todo NotifyAvaliable del objeto Link obtenido v�a GetInput().
+        /// Notifica la disponibilidad llamando al método NotifyAvaliable del objeto Link obtenido v�a GetInput().
         /// </summary>
         public override bool Unblock()
         {
@@ -103,13 +104,13 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Recibe un �tem. Si cumple la disponibilidad, lo encola y notifica al ArrivalListener.
+        /// Recibe un ítem. Si cumple la disponibilidad, lo encola y notifica al ArrivalListener.
         /// </summary>
         public override bool Receive(Item theItem)
         {
             if (CheckAvaliability(theItem))
             {
-                //Debug.Log($"[CombinerInput] Receive(): Aceptando �tem {theItem.GetId()} en entrada {inputId}.");
+                //Debug.Log($"[CombinerInput] Receive(): Aceptando ítem {theItem.GetId()} en entrada {inputId}.");
                 currentItems++;
                 theItem.SetConstrainedInput(this.inputId);
                 itemsQueue.Enqueue(theItem);
@@ -135,20 +136,20 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Verifica si es posible recibir el �tem.
+        /// Verifica si es posible recibir el ítem.
         /// </summary>
         public override bool CheckAvaliability(Item theItem)
         {
             bool capacityOk = this.currentItems < this.capacity;
             bool valid = inputStrategy?.IsValid(theItem) ?? true;
 
-            // Consultamos al ArrivalListener si esta entrada puede enviar un �tem.
+            // Consultamos al ArrivalListener si esta entrada puede enviar un ítem.
             bool mainReceiving = arrivalListener.IsMainReceiving(this.inputId);
             return capacityOk && valid && mainReceiving;
         }
 
         /// <summary>
-        /// Devuelve la capacidad m�xima de la entrada.
+        /// Devuelve la capacidad máxima de la entrada.
         /// </summary>
         public int GetCapacity()
         {
@@ -156,7 +157,7 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Actualiza la capacidad m�xima de la entrada.
+        /// Actualiza la capacidad máxima de la entrada.
         /// </summary>
         public void SetCapacity(int newCapacity)
         {
@@ -165,7 +166,7 @@ namespace SimuLean
         }
 
         /// <summary>
-        /// Devuelve la cola de �tems de la entrada.
+        /// Devuelve la cola de ítems de la entrada.
         /// </summary>
         public Queue<Item> GetItems()
         {

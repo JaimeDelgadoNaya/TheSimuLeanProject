@@ -14,7 +14,15 @@ namespace SimuLean
 
         Queue<Item> itemsQ;
 
-        public GateQueue(int capacity, String myName, SimClock sClock) : base(myName, sClock)
+        /// <summary>
+        /// Constructor con soporte para modo headless.
+        /// </summary>
+        /// <param name="capacity">Capacidad de la cola</param>
+        /// <param name="myName">Nombre del elemento</param>
+        /// <param name="sClock">Reloj de simulación</param>
+        /// <param name="vElement">Implementación de VElement (null para headless)</param>
+        public GateQueue(int capacity, String myName, SimClock sClock, VElement vElement = null) 
+            : base(myName, sClock, vElement)
         {
             this.capacity = capacity;
             itemsQ = new Queue<Item>(capacity);
@@ -34,9 +42,7 @@ namespace SimuLean
         public void Release(int quantity)
         {
             pendingRelease += quantity;
-
             DoTransfers();
-
         }
 
         /// <summary>
@@ -65,7 +71,6 @@ namespace SimuLean
                     break;
                 }
             }
-
         }
 
         override public int GetQueueLength()
