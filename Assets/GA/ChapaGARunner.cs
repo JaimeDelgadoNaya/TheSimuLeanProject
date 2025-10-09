@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using ChapasGA.Models;
 using GeneticSharp.Domain;
 using GeneticSharp.Domain.Fitnesses;
@@ -21,7 +21,7 @@ namespace ChapasGA.GA
         public int[] BestBits { get; set; }
         public double[] CompletionTimes { get; set; }
 
-        // Almacenar configuración del modelo desde Unity
+        // Almacenar configuraciï¿½n del modelo desde Unity
         private SimulationConfig modelConfig;
 
         public void RunGA(IList<Chapa> chapas, int populationSize, int generations, float crossoverProb, float mutationProb)
@@ -82,7 +82,7 @@ namespace ChapasGA.GA
         }
 
         /// <summary>
-        /// Establece la configuración del modelo extraída desde Unity.
+        /// Establece la configuraciï¿½n del modelo extraï¿½da desde Unity.
         /// </summary>
         public void SetModelConfig(SimulationConfig config)
         {
@@ -90,7 +90,7 @@ namespace ChapasGA.GA
         }
 
         /// <summary>
-        /// Obtiene la configuración del modelo actual.
+        /// Obtiene la configuraciï¿½n del modelo actual.
         /// </summary>
         public SimulationConfig GetModelConfig()
         {
@@ -98,7 +98,28 @@ namespace ChapasGA.GA
         }
 
         /// <summary>
-        /// Ejecuta simulación usando modelo configurado desde Unity.
+        /// Convierte la lista de Chapas a un diccionario column-oriented para usar con SeqOptTools.
+        /// </summary>
+        private Dictionary<string, List<string>> ChapasToDataDict(List<Chapa> chapas)
+        {
+            var dataDict = new Dictionary<string, List<string>>();
+
+            // Map Chapa properties to dictionary columns
+            // Assuming arrival times are sequential with small intervals
+            dataDict["Time"] = chapas.Select((c, index) => (index * 0.1).ToString()).ToList();
+            dataDict["Name"] = chapas.Select(c => c.Name ?? "Chapa").ToList();
+            dataDict["Q"] = chapas.Select(c => "1").ToList(); // 1 item per chapa
+            dataDict["tSoldadura"] = chapas.Select(c => c.tSoldadura.ToString()).ToList();
+            dataDict["tInspeccion"] = chapas.Select(c => c.tInspeccion.ToString()).ToList();
+            dataDict["DueDate"] = chapas.Select(c => c.DueDate.ToString()).ToList();
+            
+            // inspeccionOn will be added separately via AddLabelsToDict in RunSimulationWithConfig
+
+            return dataDict;
+        }
+
+        /// <summary>
+        /// Ejecuta simulaciï¿½n usando modelo configurado desde Unity con el orden y bits de inspecciï¿½n del GA.
         /// </summary>
         public SimulationResult RunSimulationWithConfig(List<Chapa> chapas, int[] order = null, int[] inspectionBits = null)
         {
@@ -113,11 +134,41 @@ namespace ChapasGA.GA
                 order = Enumerable.Range(0, chapas.Count).ToArray();
             }
 
-            // Si no se proporcionan bits de inspección, no inspeccionar ninguna
+            // Si no se proporcionan bits de inspecciï¿½n, no inspeccionar ninguna
             if (inspectionBits == null)
             {
                 inspectionBits = new int[chapas.Count];
             }
+
+            // ========================================
+            // NUEVO: Usar SeqOptTools para reordenar
+            // ========================================
+            
+            // 1. Convertir chapas a dataDict
+            var chapaDataDict = ChapasToDataDict(chapas);
+            
+            // 2. Convertir order (0-based) a priorities (1-based)
+            // order[i] = j significa que el item i debe ir a la posiciï¿½n j
+            // pero SeqOptTools espera priorities donde priorities[i] = j significa
+            // que el item en la posiciÃ³n i original debe ir a la posiciÃ³n j nueva
+            
+            // Invertir el order array para obtener priorities
+            var priorities = new int[order.Length];
+            for (int i = 0; i < order.Length; i++)
+            {
+                // order[i] es el Ã­ndice original del item que debe estar en posiciÃ³n i
+                // priorities[order[i]] = i + 1 (1-based)
+                priorities[order[i]] = i + 1;
+            }
+            
+            // 3. Agregar inspection bits al dataDict
+            SeqOptTools.AddLabelsToDict(chapaDataDict, "inspeccionOn", inspectionBits);
+            
+            // 4. Reordenar usando TransformSequence
+            var reorderedDataDict = SeqOptTools.TransformSequence(chapaDataDict, priorities);
+            
+            // 5. Actualizar la configuraciÃ³n del modelo para usar el dataDict reordenado
+            UpdateModelConfigWithReorderedData(reorderedDataDict);
 
             // Crear SimClock
             var clock = new SimClock();
@@ -125,18 +176,15 @@ namespace ChapasGA.GA
             // Crear factory para construir modelo headless
             var factory = new HeadlessModelFactory(clock, enableLogging: false);
 
-            // Construir modelo desde configuración
+            // Construir modelo desde configuraciï¿½n actualizada
             var elements = factory.BuildModel(modelConfig);
 
-            // Buscar el source y configurarlo con los datos de las chapas
+            // Buscar el source - ya debe estar configurado con los datos reordenados
             ScheduleSource source = FindScheduleSource(elements);
             if (source != null)
             {
-                // NOTA: ScheduleSource ya fue creado con los datos del Excel
-                // Aquí necesitamos reemplazarlo con los datos ordenados del GA
-                // Por ahora, esto es una limitación - el source debe ser recreado
-                // NO usar UnityEngine.Debug desde background thread
-                System.Console.WriteLine("RunSimulationWithConfig: Cannot modify ScheduleSource data after creation. Using original Excel order.");
+                // El source ahora debe estar usando el dataDict reordenado
+                System.Console.WriteLine($"[ChapaGARunner] ScheduleSource found and configured with reordered data");
             }
 
             // Buscar el sink para obtener resultados
@@ -152,7 +200,7 @@ namespace ChapasGA.GA
                 element.Start();
             }
 
-            // Ejecutar simulación
+            // Ejecutar simulaciï¿½n
             double maxSimTime = CalculateMaxSimTime(chapas);
             clock.AdvanceClock(maxSimTime);
 
@@ -167,6 +215,30 @@ namespace ChapasGA.GA
             result.SimulationTime = clock.GetSimulationTime();
 
             return result;
+        }
+
+        /// <summary>
+        /// Actualiza la configuraciï¿½n del modelo para que el ScheduleSource use el dataDict reordenado.
+        /// </summary>
+        private void UpdateModelConfigWithReorderedData(Dictionary<string, List<string>> reorderedDataDict)
+        {
+            // Buscar el elemento ScheduleSource en la configuraciï¿½n
+            foreach (var elemConfig in modelConfig.Elements)
+            {
+                if (elemConfig.Type == "UnityScheduleSource")
+                {
+                    // Actualizar el dataDict en los parÃ¡metros
+                    if (elemConfig.Parameters == null)
+                    {
+                        elemConfig.Parameters = new Dictionary<string, object>();
+                    }
+                    
+                    elemConfig.Parameters["dataDict"] = reorderedDataDict;
+                    elemConfig.Parameters["autoSort"] = false; // IMPORTANTE: No reordenar automÃ¡ticamente
+                    
+                    System.Console.WriteLine($"[ChapaGARunner] Updated ScheduleSource '{elemConfig.Name}' with reordered data");
+                }
+            }
         }
 
         /// <summary>
@@ -200,7 +272,7 @@ namespace ChapasGA.GA
         }
 
         /// <summary>
-        /// Calcula el tiempo máximo de simulación necesario
+        /// Calcula el tiempo mï¿½ximo de simulaciï¿½n necesario
         /// </summary>
         private double CalculateMaxSimTime(List<Chapa> chapas)
         {
@@ -220,7 +292,7 @@ namespace ChapasGA.GA
     }
 
     /// <summary>
-    /// Resultado de una simulación headless
+    /// Resultado de una simulaciï¿½n headless
     /// </summary>
     public class SimulationResult
     {
@@ -231,14 +303,14 @@ namespace ChapasGA.GA
         public int QueueLength { get; set; }
 
         /// <summary>
-        /// Calcula una métrica de fitness combinada
+        /// Calcula una mï¿½trica de fitness combinada
         /// </summary>
         public double CalculateFitness()
         {
             // Penalizaciones:
             // - Cada retraso: -100 puntos
-            // - Cada inspección: -10 puntos
-            // - Tiempo de simulación: -1 punto por unidad de tiempo
+            // - Cada inspecciï¿½n: -10 puntos
+            // - Tiempo de simulaciï¿½n: -1 punto por unidad de tiempo
             
             double fitness = 0;
             fitness -= TotalDelays * 100.0;
