@@ -914,7 +914,7 @@ MonoBehaviour:
   generations: 10
   crossoverProb: 0.9
   mutationProb: 0.15
-  enableParallelEvaluation: 0
+  enableParallelEvaluation: 1
   maxParallelThreads: 0
   progressPanel: {fileID: 0}
   generationText: {fileID: 0}
@@ -928,6 +928,470 @@ MonoBehaviour:
   fitnessChart: {fileID: 0}
   chartWidth: 5
   chartHeight: 3
+  chapas:
+  - Name: Chapa1
+    tSoldadura: 109.4
+    tInspeccion: 210.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa2
+    tSoldadura: 247.6
+    tInspeccion: 487.2
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa3
+    tSoldadura: 120.39999999999999
+    tInspeccion: 232.79999999999998
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa4
+    tSoldadura: 109.4
+    tInspeccion: 210.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa5
+    tSoldadura: 225.20000000000002
+    tInspeccion: 442.40000000000003
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa6
+    tSoldadura: 162.8
+    tInspeccion: 317.6
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa7
+    tSoldadura: 213.20000000000002
+    tInspeccion: 418.40000000000003
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa8
+    tSoldadura: 213.20000000000002
+    tInspeccion: 418.40000000000003
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa9
+    tSoldadura: 111.80000000000001
+    tInspeccion: 215.60000000000002
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa10
+    tSoldadura: 222
+    tInspeccion: 436
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa11
+    tSoldadura: 257.79999999999995
+    tInspeccion: 507.59999999999997
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa12
+    tSoldadura: 88.39999999999999
+    tInspeccion: 168.79999999999998
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa13
+    tSoldadura: 120.39999999999999
+    tInspeccion: 232.79999999999998
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa14
+    tSoldadura: 88.39999999999999
+    tInspeccion: 168.79999999999998
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa15
+    tSoldadura: 247.8
+    tInspeccion: 487.6
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa16
+    tSoldadura: 212.8
+    tInspeccion: 417.6
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa17
+    tSoldadura: 162.4
+    tInspeccion: 316.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa18
+    tSoldadura: 225.20000000000002
+    tInspeccion: 442.40000000000003
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa19
+    tSoldadura: 260.59999999999997
+    tInspeccion: 513.1999999999999
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa20
+    tSoldadura: 250.79999999999998
+    tInspeccion: 493.59999999999997
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa21
+    tSoldadura: 162.4
+    tInspeccion: 316.8
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa22
+    tSoldadura: 247.8
+    tInspeccion: 487.6
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa23
+    tSoldadura: 162
+    tInspeccion: 316
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa24
+    tSoldadura: 162.4
+    tInspeccion: 316.8
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa25
+    tSoldadura: 257.79999999999995
+    tInspeccion: 507.59999999999997
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa26
+    tSoldadura: 257.79999999999995
+    tInspeccion: 507.59999999999997
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa27
+    tSoldadura: 212.8
+    tInspeccion: 417.6
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa28
+    tSoldadura: 213.20000000000002
+    tInspeccion: 418.40000000000003
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa29
+    tSoldadura: 88.39999999999999
+    tInspeccion: 168.79999999999998
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa30
+    tSoldadura: 120.39999999999999
+    tInspeccion: 232.79999999999998
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa31
+    tSoldadura: 159.2
+    tInspeccion: 310.4
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa32
+    tSoldadura: 158.2
+    tInspeccion: 308.4
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa33
+    tSoldadura: 111.80000000000001
+    tInspeccion: 215.60000000000002
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa34
+    tSoldadura: 224.6
+    tInspeccion: 441.2
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa35
+    tSoldadura: 162
+    tInspeccion: 316
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa36
+    tSoldadura: 111.80000000000001
+    tInspeccion: 215.60000000000002
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa37
+    tSoldadura: 92.4
+    tInspeccion: 176.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa38
+    tSoldadura: 109.4
+    tInspeccion: 210.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa39
+    tSoldadura: 111.80000000000001
+    tInspeccion: 215.60000000000002
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa40
+    tSoldadura: 109.4
+    tInspeccion: 210.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa41
+    tSoldadura: 120.39999999999999
+    tInspeccion: 232.79999999999998
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa42
+    tSoldadura: 88.39999999999999
+    tInspeccion: 168.79999999999998
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa43
+    tSoldadura: 158.2
+    tInspeccion: 308.4
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa44
+    tSoldadura: 218.4
+    tInspeccion: 428.8
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa45
+    tSoldadura: 261
+    tInspeccion: 514
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa46
+    tSoldadura: 218.4
+    tInspeccion: 428.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa47
+    tSoldadura: 111.80000000000001
+    tInspeccion: 215.60000000000002
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa48
+    tSoldadura: 88.39999999999999
+    tInspeccion: 168.79999999999998
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa49
+    tSoldadura: 212.8
+    tInspeccion: 417.6
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa50
+    tSoldadura: 218.4
+    tInspeccion: 428.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa51
+    tSoldadura: 247.8
+    tInspeccion: 487.6
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa52
+    tSoldadura: 257.79999999999995
+    tInspeccion: 507.59999999999997
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa53
+    tSoldadura: 247.6
+    tInspeccion: 487.2
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa54
+    tSoldadura: 92.4
+    tInspeccion: 176.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa55
+    tSoldadura: 109.4
+    tInspeccion: 210.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa56
+    tSoldadura: 159.2
+    tInspeccion: 310.4
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa57
+    tSoldadura: 218.4
+    tInspeccion: 428.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa58
+    tSoldadura: 120.39999999999999
+    tInspeccion: 232.79999999999998
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa59
+    tSoldadura: 257.79999999999995
+    tInspeccion: 507.59999999999997
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa60
+    tSoldadura: 218.4
+    tInspeccion: 428.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa61
+    tSoldadura: 162
+    tInspeccion: 316
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa62
+    tSoldadura: 247.6
+    tInspeccion: 487.2
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa63
+    tSoldadura: 162.8
+    tInspeccion: 317.6
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa64
+    tSoldadura: 260.59999999999997
+    tInspeccion: 513.1999999999999
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa65
+    tSoldadura: 120.39999999999999
+    tInspeccion: 232.79999999999998
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa66
+    tSoldadura: 222
+    tInspeccion: 436
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa67
+    tSoldadura: 88.39999999999999
+    tInspeccion: 168.79999999999998
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa68
+    tSoldadura: 218.4
+    tInspeccion: 428.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa69
+    tSoldadura: 162
+    tInspeccion: 316
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa70
+    tSoldadura: 218.4
+    tInspeccion: 428.8
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa71
+    tSoldadura: 250.79999999999998
+    tInspeccion: 493.59999999999997
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa72
+    tSoldadura: 218.4
+    tInspeccion: 428.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa73
+    tSoldadura: 109.4
+    tInspeccion: 210.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa74
+    tSoldadura: 162
+    tInspeccion: 316
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa75
+    tSoldadura: 162.8
+    tInspeccion: 317.6
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa76
+    tSoldadura: 261
+    tInspeccion: 514
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa77
+    tSoldadura: 158.2
+    tInspeccion: 308.4
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa78
+    tSoldadura: 224.6
+    tInspeccion: 441.2
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa79
+    tSoldadura: 222
+    tInspeccion: 436
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa80
+    tSoldadura: 257.79999999999995
+    tInspeccion: 507.59999999999997
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa81
+    tSoldadura: 224.6
+    tInspeccion: 441.2
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa82
+    tSoldadura: 250.79999999999998
+    tInspeccion: 493.59999999999997
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa83
+    tSoldadura: 218.4
+    tInspeccion: 428.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa84
+    tSoldadura: 92.4
+    tInspeccion: 176.8
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa85
+    tSoldadura: 225.20000000000002
+    tInspeccion: 442.40000000000003
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa86
+    tSoldadura: 261
+    tInspeccion: 514
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa87
+    tSoldadura: 111.80000000000001
+    tInspeccion: 215.60000000000002
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa88
+    tSoldadura: 260.59999999999997
+    tInspeccion: 513.1999999999999
+    inspeccionOn: 1
+    DueDate: 21600
+  - Name: Chapa89
+    tSoldadura: 159.2
+    tInspeccion: 310.4
+    inspeccionOn: 0
+    DueDate: 21600
+  - Name: Chapa90
+    tSoldadura: 162
+    tInspeccion: 316
+    inspeccionOn: 1
+    DueDate: 21600
+  fitnessHistory:
+  - -1730
+  - -1310
+  - -1310
+  - -1100
+  - -560
+  - -560
+  - -560
+  - -490
+  - -280
+  - -200
+  isRunning: 0
+  dispatcher: {fileID: 0}
 --- !u!114 &1123213219
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using ChapasGA.GA.Optimization;
+using ChapasGA.GA.Adapters;
 using ChapasGA.IO;
 using ChapasGA.Models;
 using System.Collections.Generic;
@@ -10,9 +11,9 @@ namespace ChapasGA.Mono
 {
     /// <summary>
     /// Unity controller for running GA optimization asynchronously with UI feedback.
-    /// Simplified to use the new ChapaOptimizer API.
+    /// Uses the generic optimization framework with Chapa data.
     /// </summary>
-    public class AsyncGAController : MonoBehaviour
+    public class AsyncSimulationGAController : MonoBehaviour
     {
         [Header("Data")]
         [SerializeField] private string excelFileName = "Llegada_Chapas.xlsx";
@@ -46,7 +47,7 @@ namespace ChapasGA.Mono
         [SerializeField] private float chartWidth = 5f;
         [SerializeField] private float chartHeight = 3f;
 
-        private ChapaOptimizer optimizer;
+        private GenericOptimizer<Chapa> optimizer;
         private ExcelChapaLoader loader = new ExcelChapaLoader();
         private List<Chapa> chapas;
         private List<float> fitnessHistory = new List<float>();
@@ -81,17 +82,17 @@ namespace ChapasGA.Mono
 
             if (isRunning)
             {
-                Debug.LogWarning("[AsyncGAController] Optimization is already running!");
+                Debug.LogWarning("[AsyncSimulationGAController] Optimization is already running!");
                 return;
             }
 
-            Debug.Log("[AsyncGAController] Starting optimization...");
+            Debug.Log("[AsyncSimulationGAController] Starting optimization...");
 
             // Load data
             if (chapas == null || chapas.Count == 0)
             {
                 chapas = loader.LoadFromStreamingAssets(excelFileName);
-                Debug.Log($"[AsyncGAController] Loaded {chapas.Count} chapas");
+                Debug.Log($"[AsyncSimulationGAController] Loaded {chapas.Count} chapas");
             }
 
             // Extract model configuration
@@ -99,8 +100,16 @@ namespace ChapasGA.Mono
             if (config == null)
                 return;
 
-            // Create optimizer
-            optimizer = new ChapaOptimizer(config);
+            // Create transformer and evaluator
+            var transformer = new ChapaDataTransformer();
+            var evaluator = new GenericSimulationEvaluator<Chapa>(config, transformer);
+            
+            // Create generic optimizer
+            optimizer = new GenericOptimizer<Chapa>(
+                evaluator,
+                sequenceLength: chapas.Count,  // Optimize sequence (order)
+                binaryLength: chapas.Count     // Optimize binary decisions (inspections)
+            );
             
             // Configure parallel evaluation
             optimizer.EnableParallelEvaluation = enableParallelEvaluation;
@@ -130,17 +139,17 @@ namespace ChapasGA.Mono
             fitnessHistory.Clear();
             ShowProgressUI();
 
-            Debug.Log("[AsyncGAController] Starting async optimization...");
+            Debug.Log("[AsyncSimulationGAController] Starting async optimization...");
 
             // Run optimization
             try
             {
                 await optimizer.OptimizeAsync(chapas, populationSize, generations, crossoverProb, mutationProb);
-                Debug.Log("[AsyncGAController] Optimization completed successfully");
+                Debug.Log("[AsyncSimulationGAController] Optimization completed successfully");
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[AsyncGAController] Error: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"[AsyncSimulationGAController] Error: {ex.Message}\n{ex.StackTrace}");
                 HideProgressUI();
             }
             finally
@@ -164,14 +173,14 @@ namespace ChapasGA.Mono
                 extractor.modelRoot = modelRoot;
                 
                 var config = extractor.ExtractConfiguration();
-                Debug.Log($"[AsyncGAController] Extracted {config.Elements.Count} elements, {config.Connections.Count} connections");
+                Debug.Log($"[AsyncSimulationGAController] Extracted {config.Elements.Count} elements, {config.Connections.Count} connections");
                 
                 DestroyImmediate(extractorGO);
                 return config;
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[AsyncGAController] Error extracting model: {ex.Message}");
+                Debug.LogError($"[AsyncSimulationGAController] Error extracting model: {ex.Message}");
                 if (extractor != null && extractor.gameObject != null)
                     DestroyImmediate(extractor.gameObject);
                 return null;
@@ -193,7 +202,7 @@ namespace ChapasGA.Mono
             {
                 if (e.Success)
                 {
-                    Debug.Log($"[AsyncGAController] Optimization Completed!");
+                    Debug.Log($"[AsyncSimulationGAController] Optimization Completed!");
                     Debug.Log($"  Best Fitness: {e.BestFitness:F2}");
                     Debug.Log($"  Inspections: {e.TotalInspections}");
                     Debug.Log($"  Delays: {e.TotalDelays}");
@@ -201,7 +210,7 @@ namespace ChapasGA.Mono
                 }
                 else
                 {
-                    Debug.LogError($"[AsyncGAController] Optimization Failed: {e.Error}");
+                    Debug.LogError($"[AsyncSimulationGAController] Optimization Failed: {e.Error}");
                 }
 
                 HideProgressUI();
@@ -289,7 +298,7 @@ namespace ChapasGA.Mono
         {
             if (optimizer != null && isRunning)
             {
-                Debug.Log("[AsyncGAController] Cancelling optimization...");
+                Debug.Log("[AsyncSimulationGAController] Cancelling optimization...");
                 optimizer.Cancel();
             }
         }
@@ -310,7 +319,7 @@ namespace ChapasGA.Mono
         {
             if (isRunning)
             {
-                Debug.Log("[AsyncGAController] Component disabled while optimization is running. Cancelling...");
+                Debug.Log("[AsyncSimulationGAController] Component disabled while optimization is running. Cancelling...");
                 CancelOptimization();
             }
         }
@@ -326,9 +335,9 @@ namespace ChapasGA.Mono
         private void DebugCheckQueue()
         {
             if (dispatcher != null)
-                Debug.Log($"[AsyncGAController] Dispatcher queue size: {dispatcher.GetQueueSize()}");
+                Debug.Log($"[AsyncSimulationGAController] Dispatcher queue size: {dispatcher.GetQueueSize()}");
             else
-                Debug.LogWarning("[AsyncGAController] Dispatcher not initialized");
+                Debug.LogWarning("[AsyncSimulationGAController] Dispatcher not initialized");
         }
 #endif
     }

@@ -4,13 +4,13 @@ using UnityEngine;
 
 namespace ChapasGA.Editor
 {
-    [CustomEditor(typeof(ChapasGAController))]
-    public class ChapasGAControllerEditor : UnityEditor.Editor
+    [CustomEditor(typeof(SimulationGAController))]
+    public class SimulationGAControllerEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
-            var controller = (ChapasGAController)target;
+            var controller = (SimulationGAController)target;
             GUILayout.Space(10);
             if (GUILayout.Button("Cargar Excel"))
             {
