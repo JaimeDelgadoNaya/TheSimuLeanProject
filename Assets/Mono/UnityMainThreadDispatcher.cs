@@ -2,6 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace ChapasGA.Mono
 {
@@ -17,12 +20,74 @@ namespace ChapasGA.Mono
         {
             if (instance == null)
             {
+#if UNITY_EDITOR
+                // In Editor mode, create a simple instance without GameObject
+                if (!Application.isPlaying)
+                {
+                    instance = new UnityMainThreadDispatcher();
+                    instance.InitializeEditorMode();
+                    UnityEngine.Debug.Log("[UnityMainThreadDispatcher] Initialized in Editor mode");
+                    return instance;
+                }
+#endif
                 var go = new GameObject("MainThreadDispatcher");
                 instance = go.AddComponent<UnityMainThreadDispatcher>();
                 DontDestroyOnLoad(go);
+                UnityEngine.Debug.Log("[UnityMainThreadDispatcher] Initialized in Play mode");
             }
             return instance;
         }
+
+        /// <summary>
+        /// Manually dispose the dispatcher (especially useful in Edit mode)
+        /// </summary>
+        public static void DisposeInstance()
+        {
+            if (instance != null)
+            {
+#if UNITY_EDITOR
+                if (instance.isEditorMode)
+                {
+                    EditorApplication.update -= instance.EditorUpdate;
+                    UnityEngine.Debug.Log("[UnityMainThreadDispatcher] Disposed Editor mode instance");
+                }
+                else
+#endif
+                {
+                    if (instance.gameObject != null)
+                    {
+                        if (Application.isPlaying)
+                            Destroy(instance.gameObject);
+                        else
+                            DestroyImmediate(instance.gameObject);
+                    }
+                }
+                instance = null;
+            }
+        }
+
+#if UNITY_EDITOR
+        private bool isEditorMode = false;
+
+        private void InitializeEditorMode()
+        {
+            isEditorMode = true;
+            EditorApplication.update += EditorUpdate;
+        }
+
+        private void EditorUpdate()
+        {
+            ProcessQueue();
+        }
+
+        ~UnityMainThreadDispatcher()
+        {
+            if (isEditorMode)
+            {
+                EditorApplication.update -= EditorUpdate;
+            }
+        }
+#endif
 
         private void Awake()
         {
@@ -39,11 +104,23 @@ namespace ChapasGA.Mono
 
         public void Update()
         {
+            ProcessQueue();
+        }
+
+        private void ProcessQueue()
+        {
             lock (executionQueue)
             {
                 while (executionQueue.Count > 0)
                 {
-                    executionQueue.Dequeue().Invoke();
+                    try
+                    {
+                        executionQueue.Dequeue().Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        UnityEngine.Debug.LogError($"[UnityMainThreadDispatcher] Error executing queued action: {ex.Message}");
+                    }
                 }
             }
         }
@@ -53,6 +130,12 @@ namespace ChapasGA.Mono
         /// </summary>
         public void Enqueue(Action action)
         {
+            if (action == null)
+            {
+                UnityEngine.Debug.LogWarning("[UnityMainThreadDispatcher] Attempted to enqueue null action");
+                return;
+            }
+
             lock (executionQueue)
             {
                 executionQueue.Enqueue(action);
@@ -64,10 +147,59 @@ namespace ChapasGA.Mono
         /// </summary>
         public void EnqueueCoroutine(IEnumerator coroutine)
         {
+            if (coroutine == null)
+            {
+                UnityEngine.Debug.LogWarning("[UnityMainThreadDispatcher] Attempted to enqueue null coroutine");
+                return;
+            }
+
             lock (executionQueue)
             {
                 executionQueue.Enqueue(() => StartCoroutine(coroutine));
             }
+        }
+
+        /// <summary>
+        /// Gets the current queue size (useful for debugging)
+        /// </summary>
+        public int GetQueueSize()
+        {
+            lock (executionQueue)
+            {
+                return executionQueue.Count;
+            }
+        }
+
+        /// <summary>
+        /// Clears all pending actions in the queue
+        /// </summary>
+        public void ClearQueue()
+        {
+            lock (executionQueue)
+            {
+                executionQueue.Clear();
+                UnityEngine.Debug.Log("[UnityMainThreadDispatcher] Queue cleared");
+            }
+        }
+
+        private void OnDestroy()
+        {
+#if UNITY_EDITOR
+            if (isEditorMode)
+            {
+                EditorApplication.update -= EditorUpdate;
+            }
+#endif
+            if (instance == this)
+            {
+                instance = null;
+            }
+        }
+
+        private void OnDisable()
+        {
+            // Process any remaining queued actions before disabling
+            ProcessQueue();
         }
     }
 }

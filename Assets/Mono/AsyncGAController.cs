@@ -44,10 +44,14 @@ namespace ChapasGA.Mono
         private List<Chapa> chapas;
         private List<float> fitnessHistory = new List<float>();
         private bool isRunning;
+        private UnityMainThreadDispatcher dispatcher;
 
         private void Awake()
         {
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            // CRITICAL: Initialize dispatcher on main thread BEFORE any async operations
+            dispatcher = UnityMainThreadDispatcher.Instance();
 
             if (startButton != null)
                 startButton.onClick.AddListener(StartGAOptimization);
@@ -59,8 +63,23 @@ namespace ChapasGA.Mono
                 progressPanel.SetActive(false);
         }
 
+        private void OnEnable()
+        {
+            // Ensure dispatcher is available when component is enabled (especially in Edit mode)
+            if (dispatcher == null)
+            {
+                dispatcher = UnityMainThreadDispatcher.Instance();
+            }
+        }
+
         public async void StartGAOptimization()
         {
+            // Ensure dispatcher is initialized (especially important in Edit mode)
+            if (dispatcher == null)
+            {
+                dispatcher = UnityMainThreadDispatcher.Instance();
+            }
+
             if (isRunning)
             {
                 Debug.LogWarning("[AsyncGAController] GA is already running!");
@@ -78,11 +97,6 @@ namespace ChapasGA.Mono
                 Debug.Log($"[AsyncGAController] Loaded {chapas.Count} chapas");
             }
 
-            // 2. Extract model (EN MAIN THREAD, ANTES de async)
-            if (modelRoot == null)
-            {
-                Debug.LogWarning("[AsyncGAController] modelRoot not assigned! Cannot extract model.");
-            }
 
             // Extraer modelo completamente ANTES de iniciar el Task
             UnityModelExtractor extractor = null;
@@ -124,6 +138,35 @@ namespace ChapasGA.Mono
             // 3. Setup runner (en Main Thread)
             runner = new AsyncGARunner();
             runner.SetModelConfig(config);  // Pasar la configuración ya extraída
+            
+            // Setup thread-safe logging callback
+            runner.LogCallback = (message) =>
+            {
+                // This will be called from background thread, enqueue to main thread
+                // Use different log levels based on message content
+                dispatcher.Enqueue(() =>
+                {
+                    if (message.Contains("Error") || message.Contains("Failed"))
+                    {
+                        Debug.LogError(message);
+                    }
+                    else if (message.Contains("Warning"))
+                    {
+                        Debug.LogWarning(message);
+                    }
+                    else if (message.Contains("Gen ") && message.Contains("Fitness"))
+                    {
+                        // Highlight generation progress with color in editor
+                        Debug.Log($"<color=cyan>{message}</color>");
+                    }
+                    else
+                    {
+                        Debug.Log(message);
+                    }
+                });
+            };
+            
+            // Subscribe to events with dispatcher already captured on main thread
             runner.ProgressChanged += OnProgressChanged;
             runner.Completed += OnCompleted;
 
@@ -140,11 +183,14 @@ namespace ChapasGA.Mono
             if (cancelButton != null)
                 cancelButton.interactable = true;
 
+            Debug.Log("[AsyncGAController] Starting async GA execution...");
+
             // 5. Run GA asynchronously (AHORA SÍ, background thread)
             // El config ya está completamente extraído, no hay más llamadas a Unity
             try
             {
                 await runner.RunGAAsync(chapas, populationSize, generations, crossoverProb, mutationProb);
+                Debug.Log("[AsyncGAController] GA async execution completed successfully");
             }
             catch (System.Exception ex)
             {
@@ -152,12 +198,21 @@ namespace ChapasGA.Mono
                 Debug.LogError($"Stack trace: {ex.StackTrace}");
                 ResetUI();
             }
+            finally
+            {
+                // Unsubscribe from events
+                if (runner != null)
+                {
+                    runner.ProgressChanged -= OnProgressChanged;
+                    runner.Completed -= OnCompleted;
+                }
+            }
         }
 
         private void OnProgressChanged(GAProgressEventArgs e)
         {
-            // Este método se llama desde background thread, usar MainThreadDispatcher
-            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            // Este método se llama desde background thread, usar dispatcher capturado
+            dispatcher.Enqueue(() =>
             {
                 UpdateUI(e);
                 UpdateChart((float)e.BestFitness);
@@ -166,7 +221,8 @@ namespace ChapasGA.Mono
 
         private void OnCompleted(GACompletedEventArgs e)
         {
-            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            // Este método se llama desde background thread, usar dispatcher capturado
+            dispatcher.Enqueue(() =>
             {
                 if (e.Success)
                 {
@@ -262,6 +318,34 @@ namespace ChapasGA.Mono
         private void OnDestroy()
         {
             CancelGA();
+            
+            // Clean up event subscriptions
+            if (runner != null)
+            {
+                runner.ProgressChanged -= OnProgressChanged;
+                runner.Completed -= OnCompleted;
+                runner.LogCallback = null;
+            }
+
+#if UNITY_EDITOR
+            // In Edit mode, if this was the last component using the dispatcher, clean it up
+            if (!Application.isPlaying)
+            {
+                // Note: Only dispose if you're sure no other components are using it
+                // For safety, we'll just log here
+                Debug.Log("[AsyncGAController] Component destroyed in Edit mode. Dispatcher remains active for other potential users.");
+            }
+#endif
+        }
+
+        private void OnDisable()
+        {
+            // Cancel any running GA when component is disabled
+            if (isRunning)
+            {
+                Debug.Log("[AsyncGAController] Component disabled while GA is running. Cancelling...");
+                CancelGA();
+            }
         }
 
         [ContextMenu("Test: Run Async GA")]
@@ -269,5 +353,31 @@ namespace ChapasGA.Mono
         {
             StartGAOptimization();
         }
+
+#if UNITY_EDITOR
+        [ContextMenu("Debug: Check Dispatcher Queue")]
+        private void DebugCheckQueue()
+        {
+            if (dispatcher != null)
+            {
+                int queueSize = dispatcher.GetQueueSize();
+                Debug.Log($"[AsyncGAController] Dispatcher queue size: {queueSize}");
+            }
+            else
+            {
+                Debug.LogWarning("[AsyncGAController] Dispatcher not initialized");
+            }
+        }
+
+        [ContextMenu("Debug: Clear Dispatcher Queue")]
+        private void DebugClearQueue()
+        {
+            if (dispatcher != null)
+            {
+                dispatcher.ClearQueue();
+                Debug.Log("[AsyncGAController] Dispatcher queue cleared");
+            }
+        }
+#endif
     }
 }

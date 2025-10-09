@@ -66,8 +66,6 @@ namespace UnitySimuLean
 
             newItem.transform.position = transform.position;
 
-            Debug.Log("GenerateItem llamado, instanciado GameObject: " + newItem.name);
-
             return newItem;
         }
 
