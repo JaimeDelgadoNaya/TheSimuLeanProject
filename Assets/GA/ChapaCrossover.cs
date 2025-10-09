@@ -6,6 +6,7 @@ using GeneticSharp.Domain.Randomizations;
 
 namespace ChapasGA.GA
 {
+    [Obsolete("Use SequenceBinaryCrossover instead.")]
     public class ChapaCrossover : CrossoverBase
     {
         public ChapaCrossover() : base(2, 2)

@@ -5,6 +5,7 @@ using GeneticSharp.Domain.Randomizations;
 
 namespace ChapasGA.GA
 {
+    [Obsolete("Use SequenceBinaryChromosome instead.")]
     public class ChapaChromosome : ChromosomeBase
     {
         public int LengthPerPart { get; }

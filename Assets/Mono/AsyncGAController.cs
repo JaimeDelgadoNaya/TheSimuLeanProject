@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using ChapasGA.GA;
+using ChapasGA.GA.Optimization;
 using ChapasGA.IO;
 using ChapasGA.Models;
 using System.Collections.Generic;
@@ -9,7 +9,8 @@ using SimuLean.Unity;
 namespace ChapasGA.Mono
 {
     /// <summary>
-    /// Controlador para ejecutar GA de forma asíncrona con UI de progreso
+    /// Unity controller for running GA optimization asynchronously with UI feedback.
+    /// Simplified to use the new ChapaOptimizer API.
     /// </summary>
     public class AsyncGAController : MonoBehaviour
     {
@@ -22,6 +23,12 @@ namespace ChapasGA.Mono
         [SerializeField] private int generations = 100;
         [SerializeField] private float crossoverProb = 0.9f;
         [SerializeField] private float mutationProb = 0.15f;
+        
+        [Header("Performance")]
+        [Tooltip("Enable parallel fitness evaluation (faster, uses multiple CPU cores)")]
+        [SerializeField] private bool enableParallelEvaluation = false;
+        [Tooltip("Maximum number of parallel threads (0 = use all CPU cores)")]
+        [SerializeField] private int maxParallelThreads = 0;
 
         [Header("UI References")]
         [SerializeField] private GameObject progressPanel;
@@ -39,7 +46,7 @@ namespace ChapasGA.Mono
         [SerializeField] private float chartWidth = 5f;
         [SerializeField] private float chartHeight = 3f;
 
-        private AsyncGARunner runner;
+        private ChapaOptimizer optimizer;
         private ExcelChapaLoader loader = new ExcelChapaLoader();
         private List<Chapa> chapas;
         private List<float> fitnessHistory = new List<float>();
@@ -49,15 +56,13 @@ namespace ChapasGA.Mono
         private void Awake()
         {
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-            // CRITICAL: Initialize dispatcher on main thread BEFORE any async operations
             dispatcher = UnityMainThreadDispatcher.Instance();
 
             if (startButton != null)
-                startButton.onClick.AddListener(StartGAOptimization);
+                startButton.onClick.AddListener(StartOptimization);
 
             if (cancelButton != null)
-                cancelButton.onClick.AddListener(CancelGA);
+                cancelButton.onClick.AddListener(CancelOptimization);
 
             if (progressPanel != null)
                 progressPanel.SetActive(false);
@@ -65,153 +70,116 @@ namespace ChapasGA.Mono
 
         private void OnEnable()
         {
-            // Ensure dispatcher is available when component is enabled (especially in Edit mode)
             if (dispatcher == null)
-            {
                 dispatcher = UnityMainThreadDispatcher.Instance();
-            }
         }
 
-        public async void StartGAOptimization()
+        public async void StartOptimization()
         {
-            // Ensure dispatcher is initialized (especially important in Edit mode)
             if (dispatcher == null)
-            {
                 dispatcher = UnityMainThreadDispatcher.Instance();
-            }
 
             if (isRunning)
             {
-                Debug.LogWarning("[AsyncGAController] GA is already running!");
+                Debug.LogWarning("[AsyncGAController] Optimization is already running!");
                 return;
             }
 
-            Debug.Log("[AsyncGAController] Starting GA optimization...");
+            Debug.Log("[AsyncGAController] Starting optimization...");
 
-            // IMPORTANTE: Todo esto se ejecuta en MAIN THREAD antes del await
-            
-            // 1. Load data
+            // Load data
             if (chapas == null || chapas.Count == 0)
             {
                 chapas = loader.LoadFromStreamingAssets(excelFileName);
                 Debug.Log($"[AsyncGAController] Loaded {chapas.Count} chapas");
             }
 
+            // Extract model configuration
+            var config = ExtractModelConfiguration();
+            if (config == null)
+                return;
 
-            // Extraer modelo completamente ANTES de iniciar el Task
+            // Create optimizer
+            optimizer = new ChapaOptimizer(config);
+            
+            // Configure parallel evaluation
+            optimizer.EnableParallelEvaluation = enableParallelEvaluation;
+            if (maxParallelThreads > 0)
+            {
+                optimizer.MaxDegreeOfParallelism = maxParallelThreads;
+            }
+            
+            // Setup logging
+            optimizer.LogCallback = (message) =>
+            {
+                dispatcher.Enqueue(() =>
+                {
+                    if (message.Contains("Error")) Debug.LogError(message);
+                    else if (message.Contains("Warning")) Debug.LogWarning(message);
+                    else if (message.Contains("Gen ")) Debug.Log($"<color=cyan>{message}</color>");
+                    else Debug.Log(message);
+                });
+            };
+            
+            // Subscribe to events
+            optimizer.ProgressChanged += OnProgressChanged;
+            optimizer.Completed += OnCompleted;
+
+            // Show UI
+            isRunning = true;
+            fitnessHistory.Clear();
+            ShowProgressUI();
+
+            Debug.Log("[AsyncGAController] Starting async optimization...");
+
+            // Run optimization
+            try
+            {
+                await optimizer.OptimizeAsync(chapas, populationSize, generations, crossoverProb, mutationProb);
+                Debug.Log("[AsyncGAController] Optimization completed successfully");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[AsyncGAController] Error: {ex.Message}\n{ex.StackTrace}");
+                HideProgressUI();
+            }
+            finally
+            {
+                if (optimizer != null)
+                {
+                    optimizer.ProgressChanged -= OnProgressChanged;
+                    optimizer.Completed -= OnCompleted;
+                }
+            }
+        }
+
+        private SimuLean.Serialization.SimulationConfig ExtractModelConfiguration()
+        {
             UnityModelExtractor extractor = null;
-            SimuLean.Serialization.SimulationConfig config = null;
             
             try
             {
-                // Crear extractor temporal
                 var extractorGO = new GameObject("TempExtractor");
                 extractor = extractorGO.AddComponent<UnityModelExtractor>();
                 extractor.modelRoot = modelRoot;
                 
-                // Extraer configuración (esto DEBE completarse en Main Thread)
-                config = extractor.ExtractConfiguration();
-                
+                var config = extractor.ExtractConfiguration();
                 Debug.Log($"[AsyncGAController] Extracted {config.Elements.Count} elements, {config.Connections.Count} connections");
                 
-                // Destruir extractor inmediatamente
                 DestroyImmediate(extractorGO);
-                extractor = null;
+                return config;
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"[AsyncGAController] Error extracting model: {ex.Message}");
                 if (extractor != null && extractor.gameObject != null)
-                {
                     DestroyImmediate(extractor.gameObject);
-                }
-                return;
-            }
-
-            // Verificar que la configuración se extrajo correctamente
-            if (config == null || config.Elements.Count == 0)
-            {
-                Debug.LogError("[AsyncGAController] Failed to extract model configuration!");
-                return;
-            }
-
-            // 3. Setup runner (en Main Thread)
-            runner = new AsyncGARunner();
-            runner.SetModelConfig(config);  // Pasar la configuración ya extraída
-            
-            // Setup thread-safe logging callback
-            runner.LogCallback = (message) =>
-            {
-                // This will be called from background thread, enqueue to main thread
-                // Use different log levels based on message content
-                dispatcher.Enqueue(() =>
-                {
-                    if (message.Contains("Error") || message.Contains("Failed"))
-                    {
-                        Debug.LogError(message);
-                    }
-                    else if (message.Contains("Warning"))
-                    {
-                        Debug.LogWarning(message);
-                    }
-                    else if (message.Contains("Gen ") && message.Contains("Fitness"))
-                    {
-                        // Highlight generation progress with color in editor
-                        Debug.Log($"<color=cyan>{message}</color>");
-                    }
-                    else
-                    {
-                        Debug.Log(message);
-                    }
-                });
-            };
-            
-            // Subscribe to events with dispatcher already captured on main thread
-            runner.ProgressChanged += OnProgressChanged;
-            runner.Completed += OnCompleted;
-
-            // 4. Show UI
-            isRunning = true;
-            fitnessHistory.Clear();
-            
-            if (progressPanel != null)
-                progressPanel.SetActive(true);
-
-            if (startButton != null)
-                startButton.interactable = false;
-
-            if (cancelButton != null)
-                cancelButton.interactable = true;
-
-            Debug.Log("[AsyncGAController] Starting async GA execution...");
-
-            // 5. Run GA asynchronously (AHORA SÍ, background thread)
-            // El config ya está completamente extraído, no hay más llamadas a Unity
-            try
-            {
-                await runner.RunGAAsync(chapas, populationSize, generations, crossoverProb, mutationProb);
-                Debug.Log("[AsyncGAController] GA async execution completed successfully");
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"[AsyncGAController] Error during GA execution: {ex.Message}");
-                Debug.LogError($"Stack trace: {ex.StackTrace}");
-                ResetUI();
-            }
-            finally
-            {
-                // Unsubscribe from events
-                if (runner != null)
-                {
-                    runner.ProgressChanged -= OnProgressChanged;
-                    runner.Completed -= OnCompleted;
-                }
+                return null;
             }
         }
 
-        private void OnProgressChanged(GAProgressEventArgs e)
+        private void OnProgressChanged(OptimizationProgressEventArgs e)
         {
-            // Este método se llama desde background thread, usar dispatcher capturado
             dispatcher.Enqueue(() =>
             {
                 UpdateUI(e);
@@ -219,14 +187,13 @@ namespace ChapasGA.Mono
             });
         }
 
-        private void OnCompleted(GACompletedEventArgs e)
+        private void OnCompleted(OptimizationCompletedEventArgs e)
         {
-            // Este método se llama desde background thread, usar dispatcher capturado
             dispatcher.Enqueue(() =>
             {
                 if (e.Success)
                 {
-                    Debug.Log($"[AsyncGAController] GA Completed!");
+                    Debug.Log($"[AsyncGAController] Optimization Completed!");
                     Debug.Log($"  Best Fitness: {e.BestFitness:F2}");
                     Debug.Log($"  Inspections: {e.TotalInspections}");
                     Debug.Log($"  Delays: {e.TotalDelays}");
@@ -234,14 +201,14 @@ namespace ChapasGA.Mono
                 }
                 else
                 {
-                    Debug.LogError($"[AsyncGAController] GA Failed: {e.Error}");
+                    Debug.LogError($"[AsyncGAController] Optimization Failed: {e.Error}");
                 }
 
-                ResetUI();
+                HideProgressUI();
             });
         }
 
-        private void UpdateUI(GAProgressEventArgs e)
+        private void UpdateUI(OptimizationProgressEventArgs e)
         {
             if (generationText != null)
                 generationText.text = $"Generation: {e.CurrentGeneration}/{e.TotalGenerations}";
@@ -292,7 +259,19 @@ namespace ChapasGA.Mono
             }
         }
 
-        private void ResetUI()
+        private void ShowProgressUI()
+        {
+            if (progressPanel != null)
+                progressPanel.SetActive(true);
+
+            if (startButton != null)
+                startButton.interactable = false;
+
+            if (cancelButton != null)
+                cancelButton.interactable = true;
+        }
+
+        private void HideProgressUI()
         {
             isRunning = false;
 
@@ -306,52 +285,40 @@ namespace ChapasGA.Mono
                 cancelButton.interactable = false;
         }
 
-        public void CancelGA()
+        public void CancelOptimization()
         {
-            if (runner != null && isRunning)
+            if (optimizer != null && isRunning)
             {
-                Debug.Log("[AsyncGAController] Cancelling GA...");
-                runner.Cancel();
+                Debug.Log("[AsyncGAController] Cancelling optimization...");
+                optimizer.Cancel();
             }
         }
 
         private void OnDestroy()
         {
-            CancelGA();
+            CancelOptimization();
             
-            // Clean up event subscriptions
-            if (runner != null)
+            if (optimizer != null)
             {
-                runner.ProgressChanged -= OnProgressChanged;
-                runner.Completed -= OnCompleted;
-                runner.LogCallback = null;
+                optimizer.ProgressChanged -= OnProgressChanged;
+                optimizer.Completed -= OnCompleted;
+                optimizer.LogCallback = null;
             }
-
-#if UNITY_EDITOR
-            // In Edit mode, if this was the last component using the dispatcher, clean it up
-            if (!Application.isPlaying)
-            {
-                // Note: Only dispose if you're sure no other components are using it
-                // For safety, we'll just log here
-                Debug.Log("[AsyncGAController] Component destroyed in Edit mode. Dispatcher remains active for other potential users.");
-            }
-#endif
         }
 
         private void OnDisable()
         {
-            // Cancel any running GA when component is disabled
             if (isRunning)
             {
-                Debug.Log("[AsyncGAController] Component disabled while GA is running. Cancelling...");
-                CancelGA();
+                Debug.Log("[AsyncGAController] Component disabled while optimization is running. Cancelling...");
+                CancelOptimization();
             }
         }
 
-        [ContextMenu("Test: Run Async GA")]
-        public void TestAsyncGA()
+        [ContextMenu("Test: Run Optimization")]
+        public void TestOptimization()
         {
-            StartGAOptimization();
+            StartOptimization();
         }
 
 #if UNITY_EDITOR
@@ -359,24 +326,9 @@ namespace ChapasGA.Mono
         private void DebugCheckQueue()
         {
             if (dispatcher != null)
-            {
-                int queueSize = dispatcher.GetQueueSize();
-                Debug.Log($"[AsyncGAController] Dispatcher queue size: {queueSize}");
-            }
+                Debug.Log($"[AsyncGAController] Dispatcher queue size: {dispatcher.GetQueueSize()}");
             else
-            {
                 Debug.LogWarning("[AsyncGAController] Dispatcher not initialized");
-            }
-        }
-
-        [ContextMenu("Debug: Clear Dispatcher Queue")]
-        private void DebugClearQueue()
-        {
-            if (dispatcher != null)
-            {
-                dispatcher.ClearQueue();
-                Debug.Log("[AsyncGAController] Dispatcher queue cleared");
-            }
         }
 #endif
     }

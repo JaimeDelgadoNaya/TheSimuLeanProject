@@ -881,12 +881,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   excelFileName: Llegada_Chapas.xlsx
-  populationSize: 50
-  generations: 10
+  populationSize: 10
+  generations: 5
   crossoverProb: 0.9
   mutationProb: 0.15
   dryRun: 0
   logToConsole: 1
+  enableParallelEvaluation: 0
+  maxParallelThreads: 0
   modelRoot: {fileID: 0}
 --- !u!114 &1123213217
 MonoBehaviour:
@@ -932,9 +934,11 @@ MonoBehaviour:
   excelFileName: Llegada_Chapas.xlsx
   modelRoot: {fileID: 0}
   populationSize: 50
-  generations: 10
+  generations: 20
   crossoverProb: 0.9
   mutationProb: 0.15
+  enableParallelEvaluation: 0
+  maxParallelThreads: 0
   progressPanel: {fileID: 0}
   generationText: {fileID: 0}
   fitnessText: {fileID: 0}

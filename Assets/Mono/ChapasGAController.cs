@@ -1,15 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using ChapasGA.GA;
+using ChapasGA.GA.Optimization;
 using ChapasGA.IO;
 using ChapasGA.Models;
-using GeneticSharp.Domain.Chromosomes;
 using UnityEngine;
 using SimuLean.Unity;
 using SimuLean.Serialization;
 
 namespace ChapasGA.Mono
 {
+    /// <summary>
+    /// Unity controller for running GA optimization synchronously (blocking).
+    /// Useful for testing and batch processing.
+    /// </summary>
     public class ChapasGAController : MonoBehaviour
     {
         [Header("Data Source")]
@@ -22,6 +25,12 @@ namespace ChapasGA.Mono
         [SerializeField] private float mutationProb = 0.15f;
         [SerializeField] private bool dryRun = false;
         [SerializeField] private bool logToConsole = false;
+        
+        [Header("Performance")]
+        [Tooltip("Enable parallel fitness evaluation (faster, uses multiple CPU cores)")]
+        [SerializeField] private bool enableParallelEvaluation = false;
+        [Tooltip("Maximum number of parallel threads (0 = use all CPU cores)")]
+        [SerializeField] private int maxParallelThreads = 0;
 
         [Header("Model Extraction")]
         [Tooltip("Raíz del modelo de simulación en Unity")]
@@ -29,16 +38,18 @@ namespace ChapasGA.Mono
 
         private List<Chapa> _chapas;
         private readonly ExcelChapaLoader _loader = new ExcelChapaLoader();
-        private readonly ChapaGARunner _runner = new ChapaGARunner();
         private readonly CsvResultWriter _writer = new CsvResultWriter();
         private string _csvPath = string.Empty;
 
-        private UnityModelExtractor _extractor;
+        private ChapaOptimizer _optimizer;
         private SimulationConfig _modelConfig;
 
-        public double BestFitness => _runner.BestFitness;
-        public int TotalInspections => _runner.TotalInspections;
-        public int TotalDelays => _runner.TotalDelays;
+        // Public properties for accessing results
+        public double BestFitness => _optimizer?.BestFitness ?? 0;
+        public int TotalInspections => _optimizer?.TotalInspections ?? 0;
+        public int TotalDelays => _optimizer?.TotalDelays ?? 0;
+        public IList<int> BestOrder => _optimizer?.BestOrder;
+        public int[] BestInspectionBits => _optimizer?.BestInspectionBits;
         public string CsvPath => _csvPath;
 
         private void Awake()
@@ -56,22 +67,26 @@ namespace ChapasGA.Mono
         /// </summary>
         public void ExtractModel()
         {
-            if (_extractor == null)
+            UnityModelExtractor extractor = null;
+            
+            try
             {
-                // Crear extractor temporal si no existe
                 var extractorGO = new GameObject("TempModelExtractor");
-                _extractor = extractorGO.AddComponent<UnityModelExtractor>();
-                _extractor.modelRoot = modelRoot;
+                extractor = extractorGO.AddComponent<UnityModelExtractor>();
+                extractor.modelRoot = modelRoot;
+                
+                _modelConfig = extractor.ExtractConfiguration();
+                
+                Debug.Log($"[ChapasGAController] Model extracted: {_modelConfig.Elements.Count} elements, {_modelConfig.Connections.Count} connections");
+                
+                DestroyImmediate(extractorGO);
             }
-
-            _modelConfig = _extractor.ExtractConfiguration();
-            _runner.SetModelConfig(_modelConfig);
-
-            Debug.Log($"[ChapasGAController] Model extracted: {_modelConfig.Elements.Count} elements, {_modelConfig.Connections.Count} connections");
-
-            if (_extractor != null && _extractor.gameObject.name == "TempModelExtractor")
+            catch (System.Exception ex)
             {
-                DestroyImmediate(_extractor.gameObject);
+                Debug.LogError($"[ChapasGAController] Error extracting model: {ex.Message}");
+                if (extractor != null && extractor.gameObject != null)
+                    DestroyImmediate(extractor.gameObject);
+                throw;
             }
         }
 
@@ -93,49 +108,84 @@ namespace ChapasGA.Mono
 
             if (dryRun)
             {
-                Debug.Log("[ChapasGAController] DRY RUN MODE - Testing single chromosome");
-                int n = _chapas.Count;
-                var chromo = new ChapaChromosome(n);
-                for (int i = 0; i < n; i++)
-                {
-                    chromo.ReplaceGene(i, new Gene(i));
-                }
-                chromo.Repair();
-                var fitness = new ChapaFitness(_chapas, _modelConfig);
-                var details = fitness.EvaluateDetailed(chromo);
-                _runner.BestOrder = chromo.GetOrder();
-                _runner.BestBits = chromo.GetInspectionBits();
-                _runner.CompletionTimes = details.completionTimes;
-                _runner.BestFitness = details.fitness;
-                _runner.TotalInspections = details.inspections;
-                _runner.TotalDelays = details.delays;
-
-                Debug.Log($"[ChapasGAController] DRY RUN Results: Fitness={details.fitness:F2}, Inspections={details.inspections}, Delays={details.delays}");
+                Debug.Log("[ChapasGAController] DRY RUN MODE - Testing single evaluation");
+                RunDryRunTest();
             }
             else
             {
-                _runner.RunGA(_chapas, populationSize, generations, crossoverProb, mutationProb);
-                Debug.Log($"[ChapasGAController] GA Completed: BestFitness={_runner.BestFitness:F2}, Inspections={_runner.TotalInspections}, Delays={_runner.TotalDelays}");
+                // Create optimizer and run synchronously
+                _optimizer = new ChapaOptimizer(_modelConfig);
+                
+                // Configure parallel evaluation
+                _optimizer.EnableParallelEvaluation = enableParallelEvaluation;
+                if (maxParallelThreads > 0)
+                {
+                    _optimizer.MaxDegreeOfParallelism = maxParallelThreads;
+                }
+                
+                // Setup logging
+                _optimizer.LogCallback = (message) => 
+                {
+                    if (logToConsole || message.Contains("Gen "))
+                        Debug.Log(message);
+                };
+
+                // Run optimization (blocks until complete)
+                _optimizer.Optimize(_chapas, populationSize, generations, crossoverProb, mutationProb);
+                
+                Debug.Log($"[ChapasGAController] GA Completed: BestFitness={BestFitness:F2}, Inspections={TotalInspections}, Delays={TotalDelays}");
             }
 
             if (logToConsole)
             {
-                Debug.Log($"BestFitness {_runner.BestFitness} TotalInspections {_runner.TotalInspections} TotalDelays {_runner.TotalDelays}");
+                Debug.Log($"BestFitness {BestFitness} TotalInspections {TotalInspections} TotalDelays {TotalDelays}");
             }
+        }
+
+        private void RunDryRunTest()
+        {
+            // Test a single evaluation with original order
+            var evaluator = new ChapaSimulationEvaluator(_modelConfig);
+            
+            int[] originalOrder = Enumerable.Range(0, _chapas.Count).ToArray();
+            int[] noInspections = new int[_chapas.Count];
+            
+            var metrics = evaluator.RunSimulation(_chapas, originalOrder, noInspections);
+            double fitness = evaluator.CalculateFitness(metrics);
+            
+            Debug.Log($"[ChapasGAController] DRY RUN Results:");
+            Debug.Log($"  Fitness: {fitness:F2}");
+            Debug.Log($"  Inspections: {metrics.TotalInspections}");
+            Debug.Log($"  Delays: {metrics.TotalDelays}");
+            Debug.Log($"  Simulation Time: {metrics.SimulationTime:F2}s");
         }
 
         public void ExportCSV()
         {
-            if (_chapas == null || _runner.BestOrder == null)
+            if (_chapas == null || BestOrder == null)
             {
-                Debug.LogWarning("No results to export.");
+                Debug.LogWarning("[ChapasGAController] No results to export.");
                 return;
             }
-            _csvPath = _writer.WriteResult("resultado_optimizacion.csv", _chapas, _runner.BestOrder, _runner.BestBits, _runner.CompletionTimes, _runner.TotalInspections, _runner.TotalDelays);
+            
+            // Create dummy completion times (not currently tracked)
+            double[] completionTimes = new double[_chapas.Count];
+            
+            _csvPath = _writer.WriteResult(
+                "resultado_optimizacion.csv", 
+                _chapas, 
+                BestOrder, 
+                BestInspectionBits, 
+                completionTimes, 
+                TotalInspections, 
+                TotalDelays);
+            
             if (logToConsole)
             {
-                Debug.Log($"BestFitness {_runner.BestFitness} TotalInspections {_runner.TotalInspections} TotalDelays {_runner.TotalDelays} CSV: {_csvPath}");
+                Debug.Log($"BestFitness {BestFitness} TotalInspections {TotalInspections} TotalDelays {TotalDelays} CSV: {_csvPath}");
             }
+            
+            Debug.Log($"[ChapasGAController] Results exported to: {_csvPath}");
         }
 
         // ========== CONTEXT MENU TESTS ==========
@@ -153,6 +203,7 @@ namespace ChapasGA.Mono
             if (modelRoot == null)
             {
                 Debug.LogWarning("modelRoot is not assigned in Inspector!");
+                return;
             }
 
             ExtractModel();
@@ -181,7 +232,8 @@ namespace ChapasGA.Mono
             Debug.Log("\n[Step 2/4] Extracting Model from Unity...");
             if (modelRoot == null)
             {
-                Debug.LogWarning("modelRoot is not assigned in Inspector");
+                Debug.LogWarning("modelRoot is not assigned in Inspector!");
+                
             }
             ExtractModel();
             Debug.Log($"✅ Extracted {_modelConfig.Elements.Count} elements, {_modelConfig.Connections.Count} connections");
@@ -190,9 +242,6 @@ namespace ChapasGA.Mono
             Debug.Log("\n[Step 3/4] Running GA...");
             int originalPopSize = populationSize;
             int originalGens = generations;
-            
-            populationSize = 10;  // Small for testing
-            generations = 5;       // Small for testing
             
             RunGA();
             
@@ -203,7 +252,8 @@ namespace ChapasGA.Mono
             Debug.Log($"   - Best Fitness: {BestFitness:F2}");
             Debug.Log($"   - Total Inspections: {TotalInspections}");
             Debug.Log($"   - Total Delays: {TotalDelays}");
-            Debug.Log($"   - Best Order: {string.Join(", ", _runner.BestOrder)}");
+            if (BestOrder != null)
+                Debug.Log($"   - Best Order: {string.Join(", ", BestOrder)}");
 
             // 4. Export CSV
             Debug.Log("\n[Step 4/4] Exporting CSV...");
@@ -230,26 +280,60 @@ namespace ChapasGA.Mono
                 if (modelRoot == null)
                 {
                     Debug.LogWarning("modelRoot is not assigned!");
+                    return;
                 }
                 ExtractModel();
             }
 
             Debug.Log($"\n[Test] Running simulation with original order...");
             
-            // Run simulation with original order
+            // Create evaluator and run single simulation
+            var evaluator = new ChapaSimulationEvaluator(_modelConfig);
+            
             int[] originalOrder = Enumerable.Range(0, _chapas.Count).ToArray();
             int[] noInspections = new int[_chapas.Count];
             
-            var result = _runner.RunSimulationWithConfig(_chapas, originalOrder, noInspections);
+            var metrics = evaluator.RunSimulation(_chapas, originalOrder, noInspections);
+            double fitness = evaluator.CalculateFitness(metrics);
             
             Debug.Log($"✅ Simulation completed:");
-            Debug.Log($"   - Items Processed: {result.TotalItems}");
-            Debug.Log($"   - Inspections: {result.TotalInspections}");
-            Debug.Log($"   - Delays: {result.TotalDelays}");
-            Debug.Log($"   - Simulation Time: {result.SimulationTime:F2}s");
-            Debug.Log($"   - Fitness: {result.CalculateFitness():F2}");
+            Debug.Log($"   - Items Processed: {metrics.TotalItems}");
+            Debug.Log($"   - Inspections: {metrics.TotalInspections}");
+            Debug.Log($"   - Delays: {metrics.TotalDelays}");
+            Debug.Log($"   - Simulation Time: {metrics.SimulationTime:F2}s");
+            Debug.Log($"   - Fitness: {fitness:F2}");
 
             Debug.Log("\n========== TEST COMPLETED ==========");
+        }
+
+        [ContextMenu("Test: Dry Run Evaluation")]
+        public void TestDryRun()
+        {
+            Debug.Log("========== DRY RUN TEST ==========");
+            
+            if (_chapas == null || _chapas.Count == 0)
+            {
+                LoadExcel();
+            }
+
+            if (_modelConfig == null)
+            {
+                if (modelRoot == null)
+                {
+                    Debug.LogWarning("modelRoot is not assigned!");
+                    return;
+                }
+                ExtractModel();
+            }
+
+            bool originalDryRun = dryRun;
+            dryRun = true;
+            
+            RunGA();
+            
+            dryRun = originalDryRun;
+            
+            Debug.Log("\n========== DRY RUN COMPLETED ==========");
         }
     }
 }

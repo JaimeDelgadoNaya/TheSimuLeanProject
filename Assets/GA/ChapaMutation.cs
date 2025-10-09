@@ -5,6 +5,7 @@ using GeneticSharp.Domain.Randomizations;
 
 namespace ChapasGA.GA
 {
+    [Obsolete("Use SequenceBinaryMutation instead.")]
     public class ChapaMutation : MutationBase
     {
         protected override void PerformMutate(IChromosome chromosome, float probability)
